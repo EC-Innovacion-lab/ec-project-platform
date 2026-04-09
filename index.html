@@ -200,6 +200,13 @@ label:first-child{margin-top:0}
 </head>
 <body>
 
+<!-- LOADING OVERLAY -->
+<div id="loading-overlay" style="display:flex;position:fixed;inset:0;background:#0f2040;z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:16px">
+  <div style="width:48px;height:48px;border:4px solid rgba(255,255,255,0.2);border-top-color:#60a5fa;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+  <div style="color:#c8d6e8;font-size:14px;font-family:sans-serif">Conectando con la base de datos...</div>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+</div>
+
 <!-- LOGIN SCREEN -->
 <div class="login-screen" id="login-screen">
   <div class="login-box">
@@ -365,6 +372,10 @@ label:first-child{margin-top:0}
 
 <!-- TEAM -->
 <div class="page" id="page-team">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+    <div style="font-size:13px;color:var(--text-secondary)">Los miembros se sincronizan desde Gestión de usuarios</div>
+    <button class="btn btn-primary btn-sm" onclick="openModal('new-user')" id="team-add-btn">+ Agregar miembro</button>
+  </div>
   <div class="section-title">Miembros del equipo</div>
   <div class="grid3" id="team-grid"></div>
   <div class="section-title">Carga de trabajo</div>
@@ -542,6 +553,27 @@ label:first-child{margin-top:0}
 </div>
 </div>
 
+<!-- EDIT MEMBER MODAL -->
+<div class="modal-bg" id="modal-edit-member">
+<div class="modal" style="width:480px">
+  <div class="modal-header">
+    <div class="modal-title">Editar miembro del equipo</div>
+    <button class="close-btn" onclick="closeModal('edit-member')">×</button>
+  </div>
+  <div class="alert-info alert-box" style="margin-bottom:14px">Los cambios aquí también actualizan los datos del usuario en Gestión de usuarios.</div>
+  <div class="form-grid">
+    <div><label>Nombre completo</label><input id="em-name" placeholder="Nombre Apellido"></div>
+    <div><label>Correo electrónico</label><input id="em-email" type="email" placeholder="correo@empresa.com"></div>
+    <div><label>Rol en el equipo</label><input id="em-role" placeholder="Ej: Líder de Proyecto, Analista"></div>
+    <div><label>Departamento</label><input id="em-dept" placeholder="Ej: Finanzas, TI, RRHH"></div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;border-top:1.5px solid var(--border-main);padding-top:16px">
+    <button class="btn" onclick="closeModal('edit-member')">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveEditMember()">Guardar cambios</button>
+  </div>
+</div>
+</div>
+
 <!-- RESET PASSWORD MODAL -->
 <div class="modal-bg" id="modal-reset-pass">
 <div class="modal" style="width:420px">
@@ -564,8 +596,9 @@ label:first-child{margin-top:0}
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<script>
+<script type="module">
 // ─── DEFAULTS (solo se usan la primera vez, si no hay datos guardados) ────────
+// ─── DEFAULTS (solo se usan la primera vez si Firestore está vacío) ──────────
 const DEFAULT_USERS=[
   {id:'U06',name:'Danel Olarte Lopez',email:'gerenciademarca@ectransportes.com',pass:'Colombia.2026',role:'admin',dept:'TI',active:true}
 ];
@@ -582,43 +615,77 @@ const DEFAULT_TASKS=[
   {id:'T-007',name:'Diseño curricular',obj:'Plan de capacitación por área',project:'PRY-004',owner:'RRHH',ownerEmail:'rrhh@empresa.com',assign:'2024-04-02',due:'2024-05-01',status:'En proceso',priority:'Media',notes:''},
   {id:'T-008',name:'Pruebas de usuario',obj:'Validar usabilidad del portal',project:'PRY-005',owner:'Sofía Pérez',ownerEmail:'s.perez@empresa.com',assign:'2024-03-01',due:'2024-03-20',status:'Completada',priority:'Alta',notes:''}
 ];
-const DEFAULT_TEAM=[
-  {name:'Ana Torres',role:'Líder de Proyecto',email:'a.torres@empresa.com',dept:'Finanzas'},
-  {name:'Carlos Ruiz',role:'Líder de Proyecto',email:'c.ruiz@empresa.com',dept:'Comercial'},
-  {name:'Laura Mesa',role:'Analista Senior',email:'l.mesa@empresa.com',dept:'Operaciones'},
-  {name:'Miguel Ángel',role:'Líder de Proyecto',email:'m.angel@empresa.com',dept:'RRHH'},
-  {name:'Sofía Pérez',role:'Líder de Proyecto',email:'s.perez@empresa.com',dept:'Compras'},
-  {name:'TI Externo',role:'Consultor',email:'ti@proveedor.com',dept:'Externo'},
-  {name:'RRHH',role:'Coordinadora',email:'rrhh@empresa.com',dept:'RRHH'}
-];
 const DEFAULT_HISTORY=[
   {date:'2024-04-01',project:'PRY-001',user:'Ana Torres',action:'Estado cambiado de "Diseño" a "Ejecución"'},
-  {date:'2024-03-28',project:'PRY-002',user:'Carlos Ruiz',action:'Tarea "Diseño de encuestas NPS" marcada como Completada'},
-  {date:'2024-03-20',project:'PRY-005',user:'Sofía Pérez',action:'Proyecto marcado como Finalizado'},
-  {date:'2024-03-15',project:'PRY-004',user:'Miguel Ángel',action:'Proyecto creado e iniciado'},
-  {date:'2024-03-10',project:'PRY-001',user:'Ana Torres',action:'Presupuesto actualizado a $45,000'},
-  {date:'2024-03-05',project:'PRY-002',user:'Carlos Ruiz',action:'Dependencia con PRY-001 registrada'},
-  {date:'2024-02-20',project:'PRY-003',user:'Laura Mesa',action:'Proyecto creado en estado Prefactibilidad'}
+  {date:'2024-03-20',project:'PRY-005',user:'Sofía Pérez',action:'Proyecto marcado como Finalizado'}
 ];
 
-// ─── PERSISTENCIA localStorage ───────────────────────────────────────────────
-function load(key,def){try{const v=localStorage.getItem('ecpm_'+key);return v?JSON.parse(v):def;}catch(e){return def;}}
-function persist(){
+// ─── FIREBASE SETUP ──────────────────────────────────────────────────────────
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBqpZxcEsq-CO0EXqhxv6ARh3roDEnKP8M",
+  authDomain: "ec-project-platform.firebaseapp.com",
+  projectId: "ec-project-platform",
+  storageBucket: "ec-project-platform.firebasestorage.app",
+  messagingSenderId: "136091015578",
+  appId: "1:136091015578:web:8eb5741098ffe908e98223"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db    = getFirestore(fbApp);
+const DB_DOC = 'ecproject/data';
+
+// ─── PERSISTENCIA FIRESTORE ───────────────────────────────────────────────────
+async function persist(){
   try{
-    localStorage.setItem('ecpm_users',JSON.stringify(users));
-    localStorage.setItem('ecpm_projects',JSON.stringify(projects));
-    localStorage.setItem('ecpm_tasks',JSON.stringify(tasks));
-    localStorage.setItem('ecpm_team',JSON.stringify(team));
-    localStorage.setItem('ecpm_history',JSON.stringify(history));
-  }catch(e){console.warn('No se pudo guardar en localStorage',e);}
+    const [col,docId]=DB_DOC.split('/');
+    await setDoc(doc(db,col,docId),{users,projects,tasks,history});
+  }catch(e){
+    console.warn('Firebase write error:',e);
+    // Fallback a localStorage
+    try{
+      localStorage.setItem('ecpm_users',JSON.stringify(users));
+      localStorage.setItem('ecpm_projects',JSON.stringify(projects));
+      localStorage.setItem('ecpm_tasks',JSON.stringify(tasks));
+      localStorage.setItem('ecpm_history',JSON.stringify(history));
+    }catch(le){console.warn('localStorage fallback error:',le);}
+  }
 }
 
-// ─── DATA (carga desde localStorage o usa defaults la primera vez) ────────────
-let users    = load('users',    DEFAULT_USERS);
-let projects = load('projects', DEFAULT_PROJECTS);
-let tasks    = load('tasks',    DEFAULT_TASKS);
-let team     = load('team',     DEFAULT_TEAM);
-let history  = load('history',  DEFAULT_HISTORY);
+async function loadFromFirebase(){
+  showLoadingOverlay(true);
+  try{
+    const [col,docId]=DB_DOC.split('/');
+    const snap=await getDoc(doc(db,col,docId));
+    if(snap.exists()){
+      const d=snap.data();
+      users    = d.users    || DEFAULT_USERS;
+      projects = d.projects || DEFAULT_PROJECTS;
+      tasks    = d.tasks    || DEFAULT_TASKS;
+      history  = d.history  || DEFAULT_HISTORY;
+    } else {
+      // Primera vez: guardar defaults en Firebase
+      users=DEFAULT_USERS; projects=DEFAULT_PROJECTS;
+      tasks=DEFAULT_TASKS; history=DEFAULT_HISTORY;
+      await persist();
+    }
+  }catch(e){
+    console.warn('Firebase read error, usando localStorage:',e);
+    users    = JSON.parse(localStorage.getItem('ecpm_users')   ||'null') || DEFAULT_USERS;
+    projects = JSON.parse(localStorage.getItem('ecpm_projects')||'null') || DEFAULT_PROJECTS;
+    tasks    = JSON.parse(localStorage.getItem('ecpm_tasks')   ||'null') || DEFAULT_TASKS;
+    history  = JSON.parse(localStorage.getItem('ecpm_history') ||'null') || DEFAULT_HISTORY;
+  }
+  showLoadingOverlay(false);
+}
+
+function showLoadingOverlay(show){
+  document.getElementById('loading-overlay').style.display=show?'flex':'none';
+}
+
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+let users=[], projects=[], tasks=[], history=[];
 
 let currentUser=null;
 let editUserIdx=-1;
@@ -752,7 +819,7 @@ function buildDepCheckboxes(){
 }
 
 // ─── SAVE / CRUD ──────────────────────────────────────────────────────────────
-function saveProject(){
+async function saveProject(){
   const deps=[...document.querySelectorAll('#dep-checkboxes input:checked')].map(c=>c.value);
   const imp=impScores.reduce((a,b)=>a+b,0)/4;
   const eff=effScores.reduce((a,b)=>a+b,0)/4;
@@ -760,15 +827,15 @@ function saveProject(){
   const p={id:document.getElementById('p-id').value||'PRY-'+(projects.length+1).toString().padStart(3,'0'),name:document.getElementById('p-name').value||'Sin nombre',obj:document.getElementById('p-obj').value,desc:document.getElementById('p-desc').value,leader:document.getElementById('p-leader').value,date:document.getElementById('p-date').value,status:document.getElementById('p-status').value,start:document.getElementById('p-start').value,end:document.getElementById('p-end').value,budget:document.getElementById('p-budget').value,deps,tags:document.getElementById('p-tags').value,impact:[...impScores],effort:[...effScores],impTotal:parseFloat(imp.toFixed(2)),effTotal:parseFloat(eff.toFixed(2)),priority:parseFloat(pri.toFixed(2)),notes:document.getElementById('p-dep-notes').value};
   if(editIdx>=0){history.unshift({date:today(),project:p.id,user:currentUser?.name||'Usuario',action:'Proyecto editado: '+p.name});projects[editIdx]=p;showToast('Proyecto actualizado','success');}
   else{history.unshift({date:today(),project:p.id,user:currentUser?.name||'Usuario',action:'Proyecto creado: '+p.name});projects.push(p);showToast('Proyecto creado','success');}
-  persist();closeModal('new-project');renderProjects();renderDashboard();renderKanban();
+  await persist();closeModal('new-project');renderProjects();renderDashboard();renderKanban();
 }
-function saveTask(){
+async function saveTask(){
   const t={id:'T-'+(tasks.length+1).toString().padStart(3,'0'),name:document.getElementById('t-name').value||'Sin nombre',obj:document.getElementById('t-obj').value,project:document.getElementById('t-project').value,owner:document.getElementById('t-owner').value,ownerEmail:document.getElementById('t-owner-email').value,assign:document.getElementById('t-assign').value,due:document.getElementById('t-due').value,status:document.getElementById('t-status').value,priority:document.getElementById('t-prio').value,notes:document.getElementById('t-notes').value};
   if(editTaskIdx>=0){tasks[editTaskIdx]=t;showToast('Tarea actualizada','success');}
   else{tasks.push(t);history.unshift({date:today(),project:t.project,user:currentUser?.name||'Usuario',action:'Tarea creada: '+t.name});showToast('Tarea creada','success');}
-  persist();closeModal('new-task');renderTasks();renderDashboard();
+  await persist();closeModal('new-task');renderTasks();renderDashboard();
 }
-function saveUser(){
+async function saveUser(){
   const pass=document.getElementById('u-pass').value;
   const pass2=document.getElementById('u-pass2').value;
   if(pass!==pass2){showToast('Las contraseñas no coinciden','error');return;}
@@ -780,12 +847,12 @@ function saveUser(){
   const u={id:'U'+(users.length+1).toString().padStart(2,'0'),name:document.getElementById('u-name').value||'Sin nombre',email,pass:pass||users[editUserIdx]?.pass,role:document.getElementById('u-role').value,dept:document.getElementById('u-dept').value,active:document.getElementById('u-active').value==='1'};
   if(editUserIdx>=0){users[editUserIdx]=u;showToast('Usuario actualizado','success');}
   else{users.push(u);showToast('Usuario creado','success');}
-  persist();closeModal('new-user');renderUsers();
+  await persist();closeModal('new-user');renderUsers();
 }
-function deleteUser(idx){
+async function deleteUser(idx){
   if(!confirm('¿Eliminar usuario '+users[idx].name+'?'))return;
   if(currentUser&&users[idx].email===currentUser.email){showToast('No puedes eliminar tu propio usuario','error');return;}
-  users.splice(idx,1);persist();renderUsers();showToast('Usuario eliminado');
+  users.splice(idx,1);await persist();renderUsers();showToast('Usuario eliminado');
 }
 function editUser(idx){
   editUserIdx=idx;const u=users[idx];
@@ -859,10 +926,10 @@ function simulateSend(){
   };
 
   emailjs.send('service_jrw5zsv','template_8g7rbrh',templateParams)
-    .then(()=>{
+    .then(async ()=>{
       closeModal('email-preview');
       history.unshift({date:today(),project:t.project,user:currentUser?.name||'Sistema',action:`Correo enviado: "${t.name}" → ${t.ownerEmail}`});
-      persist();showToast('Correo enviado a '+t.ownerEmail,'success');
+      await persist();showToast('Correo enviado a '+t.ownerEmail,'success');
     })
     .catch(err=>{
       console.error('EmailJS error:',err);
@@ -898,12 +965,12 @@ function renderProjects(){
     tb.innerHTML+=`<tr><td><span class="badge b-gray">${p.id}</span></td><td style="cursor:pointer;font-weight:600;color:var(--accent)" onclick="showProjectDetail(${projects.indexOf(p)})">${p.name}</td><td>${p.leader||'—'}</td><td><span class="badge ${statusColors[p.status]||'b-gray'}">${p.status}</span></td><td><span class="badge b-blue">${p.impTotal}</span></td><td><span class="badge b-amber">${p.effTotal}</span></td><td><span class="badge ${pl.cls}">${p.priority} (${pl.text})</span></td><td>${db}</td><td style="white-space:nowrap;display:flex;gap:4px">${canEdit?`<button class="btn btn-sm" onclick="editProject(${projects.indexOf(p)})">Editar</button>`:''}${canEdit&&currentUser.role==='admin'?`<button class="btn btn-sm btn-danger" onclick="deleteProject(${projects.indexOf(p)})">Eliminar</button>`:''}</td></tr>`;
   });
 }
-function deleteProject(idx){
+async function deleteProject(idx){
   if(!confirm('¿Eliminar proyecto '+projects[idx].name+'?'))return;
   const id=projects[idx].id;
   projects.splice(idx,1);
   history.unshift({date:today(),project:id,user:currentUser?.name||'Usuario',action:'Proyecto eliminado'});
-  persist();renderProjects();renderDashboard();renderKanban();showToast('Proyecto eliminado');
+  await persist();renderProjects();renderDashboard();renderKanban();showToast('Proyecto eliminado');
 }
 function editProject(idx){
   editIdx=idx;const p=projects[idx];
@@ -974,9 +1041,9 @@ function renderTasks(){
     tb.innerHTML+=`<tr><td style="font-weight:600">${t.name}</td><td><span class="badge b-gray">${t.project}</span></td><td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary)">${t.obj||'—'}</td><td>${t.owner||'—'}</td><td>${t.assign||'—'}</td><td>${t.due||'—'}</td><td><span class="badge ${taskColors[t.status]||'b-gray'}">${t.status}</span></td><td style="white-space:nowrap;display:flex;gap:4px;flex-wrap:wrap">${canEdit?`<button class="btn btn-sm" onclick="editTask(${tidx})">Editar</button>`:''}${canEdit&&currentUser.role==='admin'?`<button class="btn btn-sm btn-danger" onclick="deleteTask(${tidx})">Elim.</button>`:''}${t.ownerEmail?`<button class="btn btn-sm notify-btn" onclick="notifyTask(${tidx})">Notificar</button>`:'<span style="font-size:11px;color:var(--text-secondary)">Sin email</span>'}</td></tr>`;
   });
 }
-function deleteTask(idx){
+async function deleteTask(idx){
   if(!confirm('¿Eliminar tarea "'+tasks[idx].name+'"?'))return;
-  tasks.splice(idx,1);persist();renderTasks();renderDashboard();showToast('Tarea eliminada');
+  tasks.splice(idx,1);await persist();renderTasks();renderDashboard();showToast('Tarea eliminada');
 }
 function editTask(idx){
   editTaskIdx=idx;const t=tasks[idx];
@@ -985,27 +1052,81 @@ function editTask(idx){
   document.getElementById('t-name').value=t.name;document.getElementById('t-obj').value=t.obj||'';document.getElementById('t-project').value=t.project;document.getElementById('t-owner').value=t.owner||'';document.getElementById('t-owner-email').value=t.ownerEmail||'';document.getElementById('t-assign').value=t.assign||'';document.getElementById('t-due').value=t.due||'';document.getElementById('t-status').value=t.status;document.getElementById('t-prio').value=t.priority||'Media';document.getElementById('t-notes').value=t.notes||'';
   document.getElementById('modal-new-task').classList.add('open');
 }
+let editMemberIdx=-1;
 function renderTeam(){
+  const members=users.filter(u=>u.active);
   const tg=document.getElementById('team-grid');tg.innerHTML='';
   const canEdit=currentUser&&currentUser.role==='admin';
-  team.forEach((m,i)=>{
-    const init=m.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
-    tg.innerHTML+=`<div class="card" style="position:relative"><div style="display:flex;gap:12px;align-items:center;margin-bottom:10px"><div style="width:44px;height:44px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#1e40af;flex-shrink:0;border:2px solid #bfdbfe">${init}</div><div style="flex:1"><div style="font-weight:600;font-size:14px">${m.name}</div><div style="font-size:12px;color:var(--text-secondary)">${m.role}</div></div>${canEdit?`<button class="btn btn-sm btn-danger" onclick="deleteMember(${i})" style="flex-shrink:0">Eliminar</button>`:''}</div><div style="font-size:12px;color:var(--text-secondary);padding-top:8px;border-top:1px solid var(--border-main)">${m.dept}<br><span style="color:var(--accent)">${m.email}</span></div></div>`;
-  });
+  const addBtn=document.getElementById('team-add-btn');
+  if(addBtn)addBtn.style.display=canEdit?'inline-block':'none';
+  if(!members.length){
+    tg.innerHTML='<div style="grid-column:span 3;padding:20px;color:var(--text-secondary);font-size:13px">No hay miembros activos. Crea usuarios en Gestión de usuarios.</div>';
+  } else {
+    members.forEach(u=>{
+      const uidx=users.indexOf(u);
+      const init=u.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+      const roleLbl={admin:'Administrador',editor:'Editor',viewer:'Visualizador'}[u.role]||u.role;
+      tg.innerHTML+=`<div class="card">
+        <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:10px">
+          <div style="width:44px;height:44px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#1e40af;flex-shrink:0;border:2px solid #bfdbfe">${init}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:14px">${u.name}</div>
+            <div style="font-size:12px;color:var(--text-secondary)">${roleLbl}</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);padding-top:8px;border-top:1px solid var(--border-main)">
+          <div><strong>Depto:</strong> ${u.dept||'—'}</div>
+          <div style="margin-top:3px;color:var(--accent)">${u.email}</div>
+        </div>
+        ${canEdit?`<div style="display:flex;gap:6px;margin-top:10px;padding-top:8px;border-top:1px solid var(--border-main)">
+          <button class="btn btn-sm" style="flex:1" onclick="openEditMember(${uidx})">Editar</button>
+          <button class="btn btn-sm btn-danger" style="flex:1" onclick="deleteMember(${uidx})">Desactivar</button>
+        </div>`:''}
+      </div>`;
+    });
+  }
   const wb=document.getElementById('workload-tbody');wb.innerHTML='';
-  team.forEach(m=>{
-    const active=tasks.filter(t=>t.owner===m.name&&t.status!=='Completada').length;
-    const projs=[...new Set(tasks.filter(t=>t.owner===m.name).map(t=>t.project))].length;
+  members.forEach(u=>{
+    const active=tasks.filter(t=>t.owner===u.name&&t.status!=='Completada').length;
+    const projs=[...new Set(tasks.filter(t=>t.owner===u.name).map(t=>t.project))].length;
     const pct=Math.min(100,active*20);
-    wb.innerHTML+=`<tr><td style="font-weight:600">${m.name}</td><td>${m.role}</td><td><span style="font-weight:700;color:${active>2?'#b91c1c':active>0?'#b45309':'#1a7a3c'}">${active}</span></td><td>${projs}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-bar" style="flex:1;height:10px"><div class="progress-fill" style="width:${pct}%;background:${pct>60?'#b91c1c':pct>30?'#b45309':'#1a7a3c'}"></div></div><span style="font-size:12px;font-weight:600;min-width:32px">${pct}%</span></div></td></tr>`;
+    wb.innerHTML+=`<tr><td style="font-weight:600">${u.name}</td><td>${u.dept||'—'}</td><td><span style="font-weight:700;color:${active>2?'#b91c1c':active>0?'#b45309':'#1a7a3c'}">${active}</span></td><td>${projs}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-bar" style="flex:1;height:10px"><div class="progress-fill" style="width:${pct}%;background:${pct>60?'#b91c1c':pct>30?'#b45309':'#1a7a3c'}"></div></div><span style="font-size:12px;font-weight:600;min-width:32px">${pct}%</span></div></td></tr>`;
   });
 }
-function deleteMember(idx){
-  if(!confirm('¿Eliminar a '+team[idx].name+' del equipo?'))return;
-  const name=team[idx].name;
-  team.splice(idx,1);
-  persist();renderTeam();
-  showToast(name+' eliminado del equipo');
+function openEditMember(userIdx){
+  editMemberIdx=userIdx;
+  const u=users[userIdx];
+  document.getElementById('em-name').value=u.name;
+  document.getElementById('em-email').value=u.email;
+  document.getElementById('em-role').value={admin:'Administrador',editor:'Editor',viewer:'Visualizador'}[u.role]||u.role;
+  document.getElementById('em-dept').value=u.dept||'';
+  document.getElementById('modal-edit-member').classList.add('open');
+}
+async function saveEditMember(){
+  if(editMemberIdx<0)return;
+  const name=document.getElementById('em-name').value.trim();
+  const email=document.getElementById('em-email').value.trim().toLowerCase();
+  const dept=document.getElementById('em-dept').value.trim();
+  if(!name){showToast('El nombre es obligatorio','error');return;}
+  if(!email){showToast('El correo es obligatorio','error');return;}
+  const exists=users.find((u,i)=>u.email.toLowerCase()===email&&i!==editMemberIdx);
+  if(exists){showToast('Ese correo ya está en uso','error');return;}
+  const oldName=users[editMemberIdx].name;
+  tasks.forEach(t=>{if(t.owner===oldName){t.owner=name;t.ownerEmail=email;}});
+  users[editMemberIdx].name=name;
+  users[editMemberIdx].email=email;
+  users[editMemberIdx].dept=dept;
+  history.unshift({date:today(),project:'—',user:currentUser?.name||'Admin',action:`Miembro editado: ${oldName} → ${name}`});
+  await persist();
+  closeModal('edit-member');renderTeam();showToast('Miembro actualizado','success');
+}
+async function deleteMember(userIdx){
+  if(!confirm('¿Desactivar a '+users[userIdx].name+'?\nEl usuario quedará inactivo y no podrá iniciar sesión.'))return;
+  const name=users[userIdx].name;
+  users[userIdx].active=false;
+  history.unshift({date:today(),project:'—',user:currentUser?.name||'Admin',action:`Miembro desactivado: ${name}`});
+  await persist();renderTeam();renderUsers();
+  showToast(name+' desactivado del equipo');
 }
 function renderUsers(){
   const tb=document.getElementById('users-tbody');tb.innerHTML='';
@@ -1069,7 +1190,7 @@ function showProjectDetail(idx){
 
 // ─── BACKUP / RESTORE ────────────────────────────────────────────────────────
 function exportBackup(){
-  const data={users,projects,tasks,team,history,exported:new Date().toISOString()};
+  const data={users,projects,tasks,history,exported:new Date().toISOString()};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -1077,17 +1198,17 @@ function exportBackup(){
   a.click();
   showToast('Backup exportado','success');
 }
-function importBackup(e){
+async function importBackup(e){
   const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
-  reader.onload=ev=>{
+  reader.onload=async ev=>{
     try{
       const data=JSON.parse(ev.target.result);
       if(!data.projects||!data.tasks||!data.users){showToast('Archivo inválido','error');return;}
       if(!confirm('¿Restaurar backup? Esto reemplazará todos los datos actuales.'))return;
       users=data.users;projects=data.projects;tasks=data.tasks;
-      team=data.team||team;history=data.history||history;
-      persist();
+      history=data.history||history;
+      await persist();
       showToast('Backup restaurado correctamente','success');
       renderDashboard();
     }catch(err){showToast('Error al leer el archivo','error');}
@@ -1106,21 +1227,37 @@ function openResetPass(idx){
   document.getElementById('rp-pass2').value='';
   document.getElementById('modal-reset-pass').classList.add('open');
 }
-function doResetPass(){
+async function doResetPass(){
   const p1=document.getElementById('rp-pass').value;
   const p2=document.getElementById('rp-pass2').value;
   if(p1.length<6){showToast('La contraseña debe tener al menos 6 caracteres','error');return;}
   if(p1!==p2){showToast('Las contraseñas no coinciden','error');return;}
   users[resetPassIdx].pass=p1;
-  persist();
   history.unshift({date:today(),project:'—',user:currentUser?.name||'Admin',action:`Contraseña restablecida para: ${users[resetPassIdx].name}`});
-  persist();
+  await persist();
   closeModal('reset-pass');
   showToast('Contraseña restablecida correctamente','success');
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 emailjs.init('syuUThzDFnt26rQZf');
+
+// Exponer funciones al scope global (necesario por type="module")
+window.nav=nav; window.doLogin=doLogin; window.doLogout=doLogout;
+window.openModal=openModal; window.closeModal=closeModal;
+window.switchTab=switchTab; window.saveProject=saveProject;
+window.saveTask=saveTask; window.saveUser=saveUser;
+window.editProject=editProject; window.deleteProject=deleteProject;
+window.editTask=editTask; window.deleteTask=deleteTask;
+window.editUser=editUser; window.deleteUser=deleteUser;
+window.showProjectDetail=showProjectDetail;
+window.notifyTask=notifyTask; window.simulateSend=simulateSend;
+window.exportBackup=exportBackup; window.importBackup=importBackup;
+window.openResetPass=openResetPass; window.doResetPass=doResetPass;
+window.openEditMember=openEditMember; window.saveEditMember=saveEditMember;
+window.deleteMember=deleteMember; window.renderTaskTimeline=renderTaskTimeline;
+
+loadFromFirebase();
 </script>
 </body>
 </html>
