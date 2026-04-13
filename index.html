@@ -1,0 +1,2226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EC_Project Management Platform</title>
+<!-- Firebase compat (funciona desde file:// y https://) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<!-- EmailJS -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-primary:#ffffff;
+  --bg-secondary:#f0f2f5;
+  --bg-tertiary:#e2e6ed;
+  --bg-sidebar:#0f2040;
+  --bg-sidebar-hover:rgba(255,255,255,0.08);
+  --bg-sidebar-active:rgba(255,255,255,0.15);
+  --text-primary:#0d1b2a;
+  --text-secondary:#4a5568;
+  --text-sidebar:#c8d6e8;
+  --text-sidebar-active:#ffffff;
+  --border-main:rgba(0,0,0,0.14);
+  --border-strong:rgba(0,0,0,0.26);
+  --accent:#1a6fba;
+  --accent-dark:#0d4d8a;
+  --accent-light:#dbeafe;
+  --green:#1a7a3c;
+  --green-light:#dcfce7;
+  --amber:#b45309;
+  --amber-light:#fef3c7;
+  --red:#b91c1c;
+  --red-light:#fee2e2;
+  --purple:#5b21b6;
+  --purple-light:#ede9fe;
+  --teal:#0f766e;
+  --teal-light:#ccfbf1;
+  --gray:#374151;
+  --gray-light:#f3f4f6;
+  --radius-md:8px;
+  --radius-lg:12px;
+  --shadow-card:0 1px 4px rgba(0,0,0,0.1);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:var(--text-primary);background:var(--bg-tertiary)}
+
+/* LOGIN */
+.login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0f2040 0%,#1a3a6b 100%)}
+.login-box{background:#fff;border-radius:16px;padding:40px;width:400px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,0.25)}
+.login-logo{font-size:22px;font-weight:700;color:#0f2040;margin-bottom:4px;letter-spacing:-0.5px}
+.login-logo span{color:#1a6fba}
+.login-sub{font-size:12px;color:var(--text-secondary);margin-bottom:28px}
+.login-label{font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:5px;margin-top:14px;display:block}
+.login-label:first-of-type{margin-top:0}
+.login-input{width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:var(--radius-md);font-size:14px;color:var(--text-primary);background:#fff;transition:border-color .2s}
+.login-input:focus{outline:none;border-color:#1a6fba;box-shadow:0 0 0 3px rgba(26,111,186,0.12)}
+.login-btn{width:100%;padding:11px;background:#0f2040;color:#fff;border:none;border-radius:var(--radius-md);font-size:14px;font-weight:600;cursor:pointer;margin-top:20px;transition:background .2s}
+.login-btn:hover{background:#1a3a6b}
+.login-err{color:#b91c1c;font-size:12px;margin-top:8px;display:none}
+.login-users{margin-top:20px;border-top:1px solid #e5e7eb;padding-top:14px}
+.login-users-title{font-size:11px;color:var(--text-secondary);margin-bottom:8px;font-weight:600}
+.login-user-chip{display:inline-block;padding:3px 10px;border-radius:20px;background:#f0f2f5;font-size:11px;color:#374151;margin:2px;cursor:pointer;border:1px solid #d1d5db}
+.login-user-chip:hover{background:#dbeafe;border-color:#1a6fba;color:#0d4d8a}
+
+/* APP SHELL */
+.app{display:flex;height:100vh;min-height:600px}
+.sidebar{width:210px;background:var(--bg-sidebar);display:flex;flex-direction:column;padding:0;flex-shrink:0;overflow:hidden}
+.sidebar-header{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.sidebar-logo{font-size:14px;font-weight:700;color:#fff;letter-spacing:-0.3px;line-height:1.2}
+.sidebar-logo span{color:#60a5fa;font-size:11px;font-weight:400;display:block;margin-top:1px}
+.sidebar-user{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.sidebar-avatar{width:28px;height:28px;border-radius:50%;background:#1a6fba;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.sidebar-uname{font-size:12px;color:#c8d6e8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sidebar-urole{font-size:10px;color:rgba(200,214,232,0.6)}
+.sidebar-nav{flex:1;padding:8px 8px;overflow-y:auto}
+.nav-item{padding:8px 10px;border-radius:var(--radius-md);cursor:pointer;font-size:13px;color:var(--text-sidebar);display:flex;align-items:center;gap:9px;transition:background .15s;margin-bottom:1px}
+.nav-item:hover{background:var(--bg-sidebar-hover)}
+.nav-item.active{background:var(--bg-sidebar-active);color:#fff;font-weight:500}
+.nav-icon{width:15px;height:15px;flex-shrink:0;opacity:.8}
+.nav-item.active .nav-icon{opacity:1}
+.nav-section{font-size:10px;font-weight:600;color:rgba(200,214,232,0.45);letter-spacing:.08em;padding:12px 10px 4px;text-transform:uppercase}
+.sidebar-logout{padding:10px 16px;border-top:1px solid rgba(255,255,255,0.08)}
+.logout-btn{width:100%;padding:7px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:var(--radius-md);color:#c8d6e8;font-size:12px;cursor:pointer;text-align:center;transition:background .15s}
+.logout-btn:hover{background:rgba(255,255,255,0.12)}
+
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.topbar{background:var(--bg-primary);border-bottom:1.5px solid var(--border-main);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow-card)}
+.topbar-title{font-size:16px;font-weight:600;color:var(--text-primary)}
+.btn{padding:7px 14px;border-radius:var(--radius-md);border:1.5px solid var(--border-strong);background:transparent;cursor:pointer;font-size:13px;color:var(--text-primary);font-family:inherit;font-weight:500;transition:background .15s}
+.btn:hover{background:var(--bg-secondary)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+.btn-danger{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-danger:hover{background:#991b1b}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-icon{padding:5px 8px;font-size:13px}
+
+.content{flex:1;overflow-y:auto;padding:20px}
+.page{display:none}
+.page.active{display:block}
+#page-kanban.active{display:flex!important}
+.card{background:var(--bg-primary);border:1.5px solid var(--border-main);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow-card)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+
+.metric{background:var(--bg-primary);border:1.5px solid var(--border-main);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow-card);position:relative;overflow:hidden}
+.metric::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent)}
+.metric-label{font-size:12px;color:var(--text-secondary);margin-bottom:6px;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.metric-val{font-size:26px;font-weight:700;color:var(--text-primary)}
+
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid transparent}
+.b-blue{background:var(--accent-light);color:#1e40af;border-color:#bfdbfe}
+.b-green{background:var(--green-light);color:#166534;border-color:#bbf7d0}
+.b-amber{background:var(--amber-light);color:#92400e;border-color:#fde68a}
+.b-red{background:var(--red-light);color:#991b1b;border-color:#fecaca}
+.b-gray{background:var(--gray-light);color:#374151;border-color:#d1d5db}
+.b-purple{background:var(--purple-light);color:#4c1d95;border-color:#ddd6fe}
+.b-teal{background:var(--teal-light);color:#134e4a;border-color:#99f6e4}
+
+.section-title{font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;margin-top:20px;border-bottom:1.5px solid var(--border-main);padding-bottom:6px}
+.section-title:first-child{margin-top:0}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:700;color:var(--text-secondary);padding:9px 12px;text-align:left;border-bottom:1.5px solid var(--border-main);background:var(--bg-secondary);text-transform:uppercase;letter-spacing:.04em}
+th:first-child{border-radius:var(--radius-md) 0 0 0}
+th:last-child{border-radius:0 var(--radius-md) 0 0}
+td{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--border-main);color:var(--text-primary)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f0f4fb}
+.progress-bar{background:var(--bg-tertiary);border-radius:4px;height:7px;overflow:hidden;border:1px solid var(--border-main)}
+.progress-fill{height:100%;border-radius:4px;background:var(--accent)}
+
+input,select,textarea{width:100%;padding:8px 11px;border:1.5px solid #d1d5db;border-radius:var(--radius-md);font-size:13px;font-family:inherit;background:#fff;color:var(--text-primary);transition:border-color .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,111,186,0.1)}
+label{font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px;margin-top:14px}
+label:first-child{margin-top:0}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.span2{grid-column:span 2}
+
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:var(--radius-lg);border:1.5px solid var(--border-main);padding:24px;width:700px;max-width:96vw;max-height:88vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.2)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:14px;border-bottom:1.5px solid var(--border-main)}
+.modal-title{font-size:17px;font-weight:700;color:var(--text-primary)}
+.close-btn{background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-secondary);line-height:1;padding:4px}
+.close-btn:hover{color:var(--text-primary)}
+
+.kanban{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px}
+.k-col{min-width:220px;background:var(--bg-secondary);border-radius:var(--radius-lg);padding:12px;flex-shrink:0;border:1.5px solid var(--border-main)}
+.k-col-title{font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:10px;display:flex;justify-content:space-between;text-transform:uppercase;letter-spacing:.05em}
+.k-card{background:#fff;border:1.5px solid var(--border-main);border-radius:var(--radius-md);padding:10px;margin-bottom:8px;cursor:pointer;transition:box-shadow .15s,border-color .15s}
+.k-card:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(26,111,186,0.12)}
+.k-card-title{font-size:13px;font-weight:600;margin-bottom:5px;color:var(--text-primary)}
+.k-card-meta{font-size:11px;color:var(--text-secondary)}
+
+.score-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.score-label{font-size:12px;color:var(--text-secondary);width:170px;flex-shrink:0;font-weight:500}
+.score-stars{display:flex;gap:4px}
+.star{width:20px;height:20px;border-radius:4px;border:1.5px solid #d1d5db;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text-secondary);transition:all .15s}
+.star:hover{border-color:var(--accent);color:var(--accent)}
+.star.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.score-val{font-size:13px;font-weight:700;color:var(--accent);width:22px}
+.priority-box{background:#f0f4fb;border:1.5px solid #bfdbfe;border-radius:var(--radius-md);padding:14px;margin-top:14px}
+.priority-formula{font-size:12px;color:var(--text-secondary);margin-bottom:10px;font-weight:500}
+.priority-result{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.priority-num{font-size:30px;font-weight:700;color:var(--accent)}
+
+.tab-bar{display:flex;gap:2px;border-bottom:2px solid var(--border-main);margin-bottom:18px}
+.tab{padding:9px 16px;font-size:13px;cursor:pointer;color:var(--text-secondary);border-bottom:3px solid transparent;margin-bottom:-2px;font-weight:500;transition:color .15s}
+.tab:hover{color:var(--text-primary)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700}
+
+.timeline{overflow-x:auto}
+.tl-row{display:flex;align-items:center;margin-bottom:7px;min-width:600px}
+.tl-label{width:190px;font-size:12px;flex-shrink:0;padding-right:10px;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.tl-track{flex:1;background:var(--bg-tertiary);border-radius:4px;height:22px;position:relative;border:1px solid var(--border-main)}
+.tl-bar{position:absolute;height:100%;border-radius:4px;background:var(--accent);display:flex;align-items:center;padding:0 7px}
+.tl-bar-label{font-size:10px;color:#fff;white-space:nowrap;font-weight:600}
+.tl-months{display:flex;flex:1}
+.tl-month{flex:1;font-size:10px;text-align:center;color:var(--text-secondary);font-weight:600}
+
+.history-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-main)}
+.history-dot{width:9px;height:9px;border-radius:50%;background:var(--accent);margin-top:5px;flex-shrink:0;border:2px solid #bfdbfe}
+.history-content{flex:1}
+.history-time{font-size:11px;color:var(--text-secondary);margin-top:2px}
+
+.toast{position:fixed;bottom:24px;right:24px;background:#0f2040;color:#fff;padding:12px 20px;border-radius:var(--radius-md);font-size:13px;font-weight:500;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.25);transition:opacity .3s;opacity:0;pointer-events:none;max-width:380px}
+.toast.show{opacity:1}
+.toast.success{background:#166534}
+.toast.error{background:#991b1b}
+
+.user-role-badge{padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.role-admin{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.role-editor{background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe}
+.role-viewer{background:#f3f4f6;color:#374151;border:1px solid #d1d5db}
+
+.notify-btn{background:#0f766e;color:#fff;border-color:#0f766e;font-size:11px;padding:3px 9px}
+.notify-btn:hover{background:#0d5c55}
+.kbd-tab{padding:8px 14px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text-secondary);border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s}
+.kbd-tab:hover{color:var(--text-primary)}
+.kbd-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700}
+
+.alert-box{padding:10px 14px;border-radius:var(--radius-md);font-size:13px;margin-bottom:12px;border:1px solid transparent}
+.alert-info{background:#dbeafe;color:#1e40af;border-color:#bfdbfe}
+.alert-warn{background:#fef3c7;color:#92400e;border-color:#fde68a}
+</style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div id="loading-overlay" style="display:flex;position:fixed;inset:0;background:#0f2040;z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:16px">
+  <div style="width:48px;height:48px;border:4px solid rgba(255,255,255,0.2);border-top-color:#60a5fa;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+  <div class="loading-msg" style="color:#c8d6e8;font-size:14px;font-family:sans-serif">Conectando con la base de datos...</div>
+  <div style="color:rgba(200,214,232,0.5);font-size:11px;font-family:sans-serif">EC_Project Management Platform</div>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+</div>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">EC_<span>Project</span></div>
+    <div class="login-sub">Management Platform — Acceso seguro</div>
+    <label class="login-label">Correo electrónico</label>
+    <input class="login-input" id="l-email" type="email" placeholder="usuario@empresa.com" onkeydown="if(event.key==='Enter')doLogin()">
+    <label class="login-label">Contraseña</label>
+    <input class="login-input" id="l-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="login-err" id="login-err">Correo o contraseña incorrectos.</div>
+    <button class="login-btn" onclick="doLogin()">Ingresar</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app-shell" style="display:none">
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">EC_Project<span>Management Platform</span></div>
+  </div>
+  <div class="sidebar-user">
+    <div class="sidebar-avatar" id="sb-avatar">U</div>
+    <div>
+      <div class="sidebar-uname" id="sb-name">Usuario</div>
+      <div class="sidebar-urole" id="sb-role">Rol</div>
+    </div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" onclick="nav('dashboard')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="nav('projects')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h6"/></svg>
+      Proyectos
+    </div>
+    <div class="nav-item" onclick="nav('kanban')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="4" height="12" rx="1"/><rect x="6" y="2" width="4" height="8" rx="1"/><rect x="11" y="2" width="4" height="10" rx="1"/></svg>
+      Kanban
+    </div>
+    <div class="nav-item" onclick="nav('timeline')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="10" rx="1"/><path d="M5 1v4M11 1v4M1 7h14"/></svg>
+      Cronograma
+    </div>
+    <div class="nav-section">Operaciones</div>
+    <div class="nav-item" onclick="nav('tasks')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8l3 3 7-7"/><rect x="1" y="1" width="14" height="14" rx="2"/></svg>
+      Tareas
+    </div>
+    <div class="nav-item" onclick="nav('team')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="3"/><path d="M1 14c0-3 2-5 5-5"/><circle cx="12" cy="7" r="2.5"/><path d="M10 14c0-2 1.5-4 4-4" stroke-width="1.2"/></svg>
+      Equipo
+    </div>
+    <div class="nav-section">Sistema</div>
+    <div class="nav-item" id="nav-users" onclick="nav('users')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3 2.5-5 6-5s6 2 6 5"/><path d="M12 7l2 2-2 2" stroke-width="1.2"/></svg>
+      Usuarios
+    </div>
+    <div class="nav-item" onclick="nav('history')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+      Historial
+    </div>
+  </div>
+  <div class="sidebar-logout">
+    <button class="logout-btn" onclick="exportBackup()" style="margin-bottom:5px">Exportar backup</button>
+    <label class="logout-btn" style="display:block;text-align:center;cursor:pointer;margin-bottom:5px">
+      Importar backup<input type="file" accept=".json" onchange="importBackup(event)" style="display:none">
+    </label>
+    <button class="logout-btn" onclick="doLogout()">Cerrar sesión</button>
+  </div>
+</div>
+
+<div class="main">
+<div class="topbar">
+  <div class="topbar-title" id="page-title">Dashboard</div>
+  <div style="display:flex;gap:8px" id="topbar-actions">
+    <button class="btn btn-primary btn-sm" onclick="openModal('new-project')">+ Proyecto</button>
+    <button class="btn btn-sm" onclick="openModal('new-task')">+ Tarea</button>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- DASHBOARD -->
+<div class="page active" id="page-dashboard">
+
+  <!-- MÉTRICAS GLOBALES -->
+  <div class="grid4" style="margin-bottom:16px">
+    <div class="metric"><div class="metric-label">Total proyectos</div><div class="metric-val" id="m-total">0</div></div>
+    <div class="metric" style="--accent:#1a7a3c"><div class="metric-label">En ejecución</div><div class="metric-val" id="m-exec">0</div></div>
+    <div class="metric" style="--accent:#b45309"><div class="metric-label">Tareas pendientes</div><div class="metric-val" id="m-tasks">0</div></div>
+    <div class="metric" style="--accent:#5b21b6"><div class="metric-label">Finalizados</div><div class="metric-val" id="m-done">0</div></div>
+  </div>
+
+  <!-- MI GESTIÓN -->
+  <div class="section-title">Mi gestión</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px">
+    <!-- Proyectos como líder -->
+    <div class="card" style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em">Proyectos como líder</div>
+          <div style="font-size:32px;font-weight:700;color:var(--accent);line-height:1.1;margin-top:4px" id="mg-proj-count">0</div>
+        </div>
+        <svg id="mg-proj-donut" width="70" height="70" viewBox="0 0 70 70"></svg>
+      </div>
+      <div id="mg-proj-legend" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+    </div>
+    <!-- Tareas como responsable -->
+    <div class="card" style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em">Tareas asignadas</div>
+          <div style="font-size:32px;font-weight:700;color:#0f766e;line-height:1.1;margin-top:4px" id="mg-task-count">0</div>
+        </div>
+        <svg id="mg-task-donut" width="70" height="70" viewBox="0 0 70 70"></svg>
+      </div>
+      <div id="mg-task-legend" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+    </div>
+    <!-- Progreso general -->
+    <div class="card" style="display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em">Progreso de mis tareas</div>
+      <div id="mg-progress-bars"></div>
+    </div>
+  </div>
+
+  <!-- MIS PROYECTOS + MIS TAREAS -->
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card">
+      <div class="section-title" style="margin-top:0;display:flex;justify-content:space-between;align-items:center">
+        Mis proyectos
+        <span id="mis-proj-badge" class="badge b-blue">0</span>
+      </div>
+      <div id="mis-proyectos-list"></div>
+    </div>
+    <div class="card">
+      <div class="section-title" style="margin-top:0;display:flex;justify-content:space-between;align-items:center">
+        Mis tareas
+        <span id="mis-task-badge" class="badge b-teal">0</span>
+      </div>
+      <div id="mis-tareas-list"></div>
+    </div>
+  </div>
+
+  <!-- GLOBAL: Distribución + próximas a vencer -->
+  <div class="grid2">
+    <div class="card">
+      <div class="section-title" style="margin-top:0">Distribución global por estado</div>
+      <div style="display:flex;gap:8px;align-items:flex-end">
+        <div id="dist-bars" style="flex:1;display:flex;align-items:flex-end;gap:6px;height:80px"></div>
+        <div id="dist-legend" style="font-size:11px;display:flex;flex-direction:column;gap:4px"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title" style="margin-top:0">Tareas próximas a vencer</div>
+      <table><thead><tr><th>Tarea</th><th>Proyecto</th><th>Entrega</th><th>Estado</th></tr></thead><tbody id="dashboard-tasks"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- PROJECTS -->
+<div class="page" id="page-projects">
+  <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+    <input type="text" id="search-projects" placeholder="Buscar proyectos..." style="width:240px" oninput="renderProjects()">
+    <select id="filter-status" style="width:200px" onchange="renderProjects()">
+      <option value="">Todos los estados</option>
+      <option>Prefactibilidad</option><option>Diseño</option><option>Gestión del Cambio</option>
+      <option>Ejecución</option><option>Optimización</option><option>Finalizado</option><option>Pendiente de dependencia</option>
+    </select>
+  </div>
+  <div class="card">
+    <table><thead><tr><th>ID</th><th>Nombre</th><th>Líder</th><th>Estado</th><th>Impacto</th><th>Esfuerzo</th><th>Prioridad</th><th>Dependencias</th><th>Acciones</th></tr></thead><tbody id="projects-tbody"></tbody></table>
+  </div>
+</div>
+
+<!-- KANBAN -->
+<div class="page" id="page-kanban" style="padding:0;overflow:hidden">
+  <div style="display:flex;height:100%;overflow:hidden">
+    <!-- Board -->
+    <div style="flex:1;overflow:auto;padding:20px;min-width:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:15px;font-weight:600">Gestión de Proyectos</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="kb-legend"></div>
+      </div>
+      <!-- Mis tareas pendientes -->
+      <div id="kb-my-tasks-section" style="margin-bottom:16px">
+        <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;display:flex;align-items:center;gap:8px">
+          Mis tareas pendientes y próximas a vencer
+          <span id="kb-my-count" class="badge b-amber">0</span>
+        </div>
+        <div id="kb-my-tasks" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+      </div>
+      <!-- Kanban board -->
+      <div class="kanban" id="kanban-board"></div>
+    </div>
+    <!-- Drawer (project detail panel) -->
+    <div id="kb-drawer" style="width:0;flex-shrink:0;background:var(--bg-primary);border-left:1.5px solid var(--border-main);overflow:hidden;transition:width .25s ease;display:flex;flex-direction:column">
+      <div style="padding:12px 16px;border-bottom:1.5px solid var(--border-main);display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+        <div style="font-size:14px;font-weight:700" id="kbd-title">Proyecto</div>
+        <button onclick="closeDrawer()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-secondary);padding:2px 6px">×</button>
+      </div>
+      <!-- Tabs -->
+      <div style="display:flex;border-bottom:1.5px solid var(--border-main);flex-shrink:0" id="kbd-tabs">
+        <div class="kbd-tab active" onclick="kbdTab(0)">Ficha</div>
+        <div class="kbd-tab" onclick="kbdTab(1)">Tareas</div>
+        <div class="kbd-tab" onclick="kbdTab(2)">Cronograma</div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:16px" id="kbd-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TIMELINE -->
+<!-- TIMELINE -->
+<div class="page" id="page-timeline">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="btn btn-sm" onclick="tlShift(-12)">«</button>
+      <button class="btn btn-sm" onclick="tlShift(-1)">‹</button>
+      <span id="tl-range-label" style="font-size:13px;font-weight:600;min-width:180px;text-align:center"></span>
+      <button class="btn btn-sm" onclick="tlShift(1)">›</button>
+      <button class="btn btn-sm" onclick="tlShift(12)">»</button>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap" id="tl-legend"></div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="overflow-x:auto">
+      <div id="tl-gantt-wrap" style="min-width:900px"></div>
+    </div>
+  </div>
+  <div class="section-title" style="margin-top:20px">Cronograma de tareas del proyecto</div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="padding:12px;border-bottom:1px solid var(--border-main);display:flex;gap:8px;align-items:center">
+      <label style="margin:0;font-size:12px;white-space:nowrap">Proyecto:</label>
+      <select id="tl-project-select" style="max-width:320px" onchange="renderTaskGantt()"><option value="">Seleccionar...</option></select>
+    </div>
+    <div style="overflow-x:auto"><div id="tl-task-gantt" style="min-width:900px"></div></div>
+  </div>
+</div>
+
+<!-- TASKS -->
+<div class="page" id="page-tasks">
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+    <select id="task-proj-filter" style="width:200px" onchange="renderTasks()"><option value="">Todos los proyectos</option></select>
+    <select id="task-status-filter" style="width:150px" onchange="renderTasks()">
+      <option value="">Todos los estados</option>
+      <option>Pendiente</option><option>En proceso</option><option>Completada</option><option>Bloqueada</option>
+    </select>
+    <select id="task-mine-filter" style="width:160px" onchange="renderTasks()">
+      <option value="">Todas las tareas</option>
+      <option value="mine">Mis tareas</option>
+    </select>
+    <input type="text" id="task-search" placeholder="Buscar tarea..." style="width:180px" oninput="renderTasks()">
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table style="table-layout:fixed">
+      <colgroup>
+        <col style="width:200px"><col style="width:90px"><col style="width:160px">
+        <col style="width:120px"><col style="width:90px"><col style="width:90px">
+        <col style="width:100px"><col style="width:130px">
+      </colgroup>
+      <thead><tr><th>Tarea</th><th>Proyecto</th><th>Objetivo</th><th>Responsable</th><th>Asignación</th><th>Entrega</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody id="tasks-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- TEAM -->
+<div class="page" id="page-team">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+    <div style="font-size:13px;color:var(--text-secondary)">Los miembros se sincronizan desde Gestión de usuarios</div>
+    <button class="btn btn-primary btn-sm" onclick="openModal('new-user')" id="team-add-btn">+ Agregar miembro</button>
+  </div>
+  <div class="section-title">Miembros del equipo</div>
+  <div class="grid3" id="team-grid"></div>
+  <div class="section-title">Carga de trabajo</div>
+  <div class="card">
+    <table><thead><tr><th>Miembro</th><th>Rol</th><th>Tareas activas</th><th>Proyectos</th><th>Carga</th></tr></thead><tbody id="workload-tbody"></tbody></table>
+  </div>
+</div>
+
+<!-- USERS -->
+<div class="page" id="page-users">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div style="font-size:13px;color:var(--text-secondary)">Gestión de accesos y roles de la plataforma</div>
+    <button class="btn btn-primary btn-sm" onclick="openModal('new-user')">+ Nuevo usuario</button>
+  </div>
+  <div class="card">
+    <table><thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Departamento</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="users-tbody"></tbody></table>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div class="page" id="page-history">
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <select id="hist-proj-filter" style="width:240px" onchange="renderHistory()"><option value="">Todos los proyectos</option></select>
+  </div>
+  <div class="card" id="history-list"></div>
+</div>
+
+</div>
+</div>
+</div>
+
+<!-- PROJECT MODAL -->
+<div class="modal-bg" id="modal-new-project">
+<div class="modal">
+  <div class="modal-header">
+    <div class="modal-title" id="project-modal-title">Nuevo proyecto</div>
+    <button class="close-btn" onclick="closeModal('new-project')">×</button>
+  </div>
+  <div class="tab-bar">
+    <div class="tab active" onclick="switchTab('general')">Ficha general</div>
+    <div class="tab" onclick="switchTab('evaluation')">Evaluación</div>
+    <div class="tab" onclick="switchTab('detail')">Dependencias</div>
+  </div>
+  <div id="tab-general">
+    <div class="form-grid">
+      <div><label>ID del proyecto</label><input id="p-id" placeholder="PRY-001"></div>
+      <div><label>Nombre del proyecto</label><input id="p-name" placeholder="Nombre del proyecto"></div>
+      <div class="span2"><label>Objetivo del proyecto</label><input id="p-obj" placeholder="Objetivo principal"></div>
+      <div class="span2"><label>Descripción</label><textarea id="p-desc" rows="3" placeholder="Descripción detallada..."></textarea></div>
+      <div><label>Líder del proyecto</label><input id="p-leader" placeholder="Nombre del líder"></div>
+      <div><label>Fecha de identificación</label><input id="p-date" type="date"></div>
+      <div><label>Estado</label>
+        <select id="p-status"><option>Prefactibilidad</option><option>Diseño</option><option>Gestión del Cambio</option><option>Ejecución</option><option>Optimización</option><option>Finalizado</option><option>Pendiente de dependencia</option></select>
+      </div>
+      <div><label>Fecha de inicio planificada</label><input id="p-start" type="date"></div>
+      <div><label>Fecha de fin planificada</label><input id="p-end" type="date"></div>
+      <div><label>Presupuesto estimado</label><input id="p-budget" placeholder="$ 0"></div>
+    </div>
+  </div>
+  <div id="tab-evaluation" style="display:none">
+    <div class="section-title">Evaluación de impacto (1–5)</div>
+    <div class="score-row"><div class="score-label">Impacto en ingresos</div><div class="score-stars" id="stars-imp1"></div><div class="score-val" id="val-imp1">1</div></div>
+    <div class="score-row"><div class="score-label">Impacto en costos</div><div class="score-stars" id="stars-imp2"></div><div class="score-val" id="val-imp2">1</div></div>
+    <div class="score-row"><div class="score-label">Impacto exp. cliente</div><div class="score-stars" id="stars-imp3"></div><div class="score-val" id="val-imp3">1</div></div>
+    <div class="score-row"><div class="score-label">Impacto marca / posicionamiento</div><div class="score-stars" id="stars-imp4"></div><div class="score-val" id="val-imp4">1</div></div>
+    <div class="section-title">Evaluación de esfuerzo (1–5)</div>
+    <div class="score-row"><div class="score-label">Complejidad técnica</div><div class="score-stars" id="stars-eff1"></div><div class="score-val" id="val-eff1">1</div></div>
+    <div class="score-row"><div class="score-label">Recursos requeridos</div><div class="score-stars" id="stars-eff2"></div><div class="score-val" id="val-eff2">1</div></div>
+    <div class="score-row"><div class="score-label">Tiempo de implementación</div><div class="score-stars" id="stars-eff3"></div><div class="score-val" id="val-eff3">1</div></div>
+    <div class="score-row"><div class="score-label">Gestión del cambio</div><div class="score-stars" id="stars-eff4"></div><div class="score-val" id="val-eff4">1</div></div>
+    <div class="priority-box">
+      <div class="priority-formula">Prioridad = Impacto / Esfuerzo (escala 0.2 — 5.0)</div>
+      <div class="priority-result">
+        <div><div style="font-size:11px;color:var(--text-secondary);font-weight:600">IMPACTO</div><div style="font-size:20px;font-weight:700;color:var(--text-primary)" id="imp-total">1.00</div></div>
+        <div style="font-size:24px;color:var(--text-secondary);font-weight:300">÷</div>
+        <div><div style="font-size:11px;color:var(--text-secondary);font-weight:600">ESFUERZO</div><div style="font-size:20px;font-weight:700;color:var(--text-primary)" id="eff-total">1.00</div></div>
+        <div style="font-size:24px;color:var(--text-secondary);font-weight:300">=</div>
+        <div><div style="font-size:11px;color:var(--text-secondary);font-weight:600">PRIORIDAD</div><div class="priority-num" id="priority-val">1.00</div></div>
+        <div id="priority-badge" class="badge b-gray" style="margin-left:4px">Media</div>
+      </div>
+    </div>
+  </div>
+  <div id="tab-detail" style="display:none">
+    <label>Dependencias (proyectos de los que depende éste)</label>
+    <div id="dep-checkboxes" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px"></div>
+    <label style="margin-top:16px">Notas de dependencia</label>
+    <textarea id="p-dep-notes" rows="2" placeholder="Razón de la dependencia..."></textarea>
+    <label style="margin-top:16px">Etiquetas / categorías</label>
+    <input id="p-tags" placeholder="ej: tecnología, comercial, operativo">
+  </div>
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;border-top:1.5px solid var(--border-main);padding-top:16px">
+    <button class="btn" onclick="closeModal('new-project')">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveProject()">Guardar proyecto</button>
+  </div>
+</div>
+</div>
+
+<!-- TASK MODAL -->
+<div class="modal-bg" id="modal-new-task">
+<div class="modal" style="width:640px">
+  <div class="modal-header">
+    <div class="modal-title" id="task-modal-title">Nueva tarea</div>
+    <button class="close-btn" onclick="cancelTaskModal()">×</button>
+  </div>
+  <div class="form-grid">
+    <div class="span2"><label>Nombre de la tarea</label><input id="t-name" placeholder="Nombre de la tarea"></div>
+    <div class="span2"><label>Objetivo de la tarea</label><input id="t-obj" placeholder="¿Qué se espera lograr?"></div>
+    <div><label>Proyecto</label><select id="t-project"><option value="">Seleccionar proyecto...</option></select></div>
+    <div><label>Fecha de asignación</label><input id="t-assign" type="date"></div>
+    <div><label>Fecha de entrega</label><input id="t-due" type="date"></div>
+    <div><label>Estado</label><select id="t-status"><option>Pendiente</option><option>En proceso</option><option>Completada</option><option>Bloqueada</option></select></div>
+    <div><label>Prioridad</label><select id="t-prio"><option>Alta</option><option>Media</option><option>Baja</option></select></div>
+    <div class="span2"><label>Descripción / notas</label><textarea id="t-notes" rows="2" placeholder="Notas adicionales..."></textarea></div>
+  </div>
+  <div style="margin-top:14px;border-top:1.5px solid var(--border-main);padding-top:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <label style="margin:0;font-size:12px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em">Responsables</label>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:12px;color:var(--text-secondary)">¿Cuántos responsables?</span>
+        <select id="t-owner-count" style="width:65px" onchange="updateOwnerFields()">
+          <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+          <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+        </select>
+      </div>
+    </div>
+    <div id="t-owners-container"></div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;border-top:1.5px solid var(--border-main);padding-top:16px">
+    <button class="btn" onclick="cancelTaskModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveTask()">Guardar tarea</button>
+  </div>
+</div>
+</div>
+
+<!-- USER MODAL -->
+<div class="modal-bg" id="modal-new-user">
+<div class="modal" style="width:500px">
+  <div class="modal-header">
+    <div class="modal-title" id="user-modal-title">Nuevo usuario</div>
+    <button class="close-btn" onclick="closeModal('new-user')">×</button>
+  </div>
+  <div class="form-grid">
+    <div><label>Nombre completo</label><input id="u-name" placeholder="Nombre Apellido"></div>
+    <div><label>Correo electrónico</label><input id="u-email" type="email" placeholder="correo@empresa.com"></div>
+    <div><label>Contraseña</label><input id="u-pass" type="password" placeholder="Mínimo 6 caracteres"></div>
+    <div><label>Confirmar contraseña</label><input id="u-pass2" type="password" placeholder="Repetir contraseña"></div>
+    <div><label>Rol</label>
+      <select id="u-role"><option value="admin">Administrador</option><option value="editor">Editor</option><option value="viewer">Visualizador</option></select>
+    </div>
+    <div><label>Departamento</label><input id="u-dept" placeholder="Ej: Finanzas, TI, RRHH"></div>
+    <div class="span2"><label>Estado</label>
+      <select id="u-active"><option value="1">Activo</option><option value="0">Inactivo</option></select>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;border-top:1.5px solid var(--border-main);padding-top:16px">
+    <button class="btn" onclick="closeModal('new-user')">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveUser()">Guardar usuario</button>
+  </div>
+</div>
+</div>
+
+<!-- PROJECT DETAIL MODAL -->
+<div class="modal-bg" id="modal-project-detail">
+<div class="modal" style="width:740px">
+  <div class="modal-header">
+    <div class="modal-title" id="detail-title">Detalle del proyecto</div>
+    <button class="close-btn" onclick="closeModal('project-detail')">×</button>
+  </div>
+  <div id="detail-content"></div>
+</div>
+</div>
+
+<!-- EMAIL PREVIEW MODAL -->
+<div class="modal-bg" id="modal-email-preview">
+<div class="modal" style="width:600px">
+  <div class="modal-header">
+    <div class="modal-title">Vista previa — Notificación de tarea</div>
+    <button class="close-btn" onclick="closeModal('email-preview')">×</button>
+  </div>
+  <div class="alert-info alert-box">El correo se enviará al responsable de la tarea usando EmailJS. Revisa que el email del responsable esté correctamente registrado en la tarea.</div>
+  <div id="email-preview-content" style="border:1.5px solid var(--border-main);border-radius:var(--radius-md);padding:16px;background:#fafafa;font-size:13px;line-height:1.7"></div>
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;border-top:1.5px solid var(--border-main);padding-top:14px">
+    <button class="btn" onclick="closeModal('email-preview')">Cerrar</button>
+    <button class="btn btn-primary" onclick="simulateSend()">Enviar correo</button>
+  </div>
+</div>
+</div>
+
+<!-- EDIT MEMBER MODAL -->
+<div class="modal-bg" id="modal-edit-member">
+<div class="modal" style="width:480px">
+  <div class="modal-header">
+    <div class="modal-title">Editar miembro del equipo</div>
+    <button class="close-btn" onclick="closeModal('edit-member')">×</button>
+  </div>
+  <div class="alert-info alert-box" style="margin-bottom:14px">Los cambios aquí también actualizan los datos del usuario en Gestión de usuarios.</div>
+  <div class="form-grid">
+    <div><label>Nombre completo</label><input id="em-name" placeholder="Nombre Apellido"></div>
+    <div><label>Correo electrónico</label><input id="em-email" type="email" placeholder="correo@empresa.com"></div>
+    <div><label>Rol en el equipo</label><input id="em-role" placeholder="Ej: Líder de Proyecto, Analista"></div>
+    <div><label>Departamento</label><input id="em-dept" placeholder="Ej: Finanzas, TI, RRHH"></div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;border-top:1.5px solid var(--border-main);padding-top:16px">
+    <button class="btn" onclick="closeModal('edit-member')">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveEditMember()">Guardar cambios</button>
+  </div>
+</div>
+</div>
+
+<!-- TASK DETAIL MODAL -->
+<div class="modal-bg" id="modal-task-detail">
+<div class="modal" style="width:560px">
+  <div class="modal-header">
+    <div class="modal-title" id="td-title">Detalle de tarea</div>
+    <button class="close-btn" onclick="closeModal('task-detail')">×</button>
+  </div>
+  <div id="td-content"></div>
+</div>
+</div>
+
+<!-- RESET PASSWORD MODAL -->
+<div class="modal-bg" id="modal-reset-pass">
+<div class="modal" style="width:420px">
+  <div class="modal-header">
+    <div class="modal-title">Restablecer contraseña</div>
+    <button class="close-btn" onclick="closeModal('reset-pass')">×</button>
+  </div>
+  <div id="reset-pass-user-info" style="background:var(--bg-secondary);border-radius:var(--radius-md);padding:12px;margin-bottom:16px;font-size:13px"></div>
+  <label>Nueva contraseña</label>
+  <input id="rp-pass" type="password" placeholder="Mínimo 6 caracteres">
+  <label>Confirmar nueva contraseña</label>
+  <input id="rp-pass2" type="password" placeholder="Repetir contraseña">
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;border-top:1.5px solid var(--border-main);padding-top:16px">
+    <button class="btn" onclick="closeModal('reset-pass')">Cancelar</button>
+    <button class="btn btn-primary" onclick="doResetPass()">Guardar nueva contraseña</button>
+  </div>
+</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DEFAULTS — datos del backup 2026-04-13 ──────────────────────────────────
+// Las contraseñas se almacenan como hash SHA-256, nunca en texto plano.
+const DEFAULT_USERS=[{"email":"gerenciademarca@ectransportes.com","role":"admin","active":true,"pass":"adb50f518d4788ca9d9f3566b39b260b922c1b5b4b12eb484484013e9988c42c","dept":"TI","id":"U06","name":"Danel Olarte Lopez"},{"role":"editor","email":"gerencia@ectransportes.com","pass":"ca8de5c7a6f7854442cf47130b7b742b8f719a73a04690c373efd0b4ced1bcf7","dept":"ALTA GERENCIA","active":true,"id":"U02","name":"Claudia Gomez"},{"pass":"adb50f518d4788ca9d9f3566b39b260b922c1b5b4b12eb484484013e9988c42c","dept":"Admin","active":true,"role":"viewer","email":"direccionadministrativa@ectransportes.com","name":"Alison Lopez","id":"U03"}];
+const DEFAULT_PROJECTS=[{"obj":"Diseñar e implementar un modelo de gestión del cambio que facilite el inicio exitoso de la operación de EC Transportes en Bogotá, asegurando la alineación del equipo, la adopción de procesos y la continuidad operativa.","effTotal":2.25,"notes":"","effort":[3,2,2,2],"priority":1.22,"desc":"El proyecto de gestión del cambio para el inicio de la operación de EC Transportes en Bogotá tiene como propósito diseñar e implementar una estrategia estructurada que facilite la transición organizacional hacia la nueva operación.\n\nIncluye la identificación de impactos operativos, la definición y estandarización de procesos, la preparación y capacitación del equipo, así como la implementación de mecanismos de comunicación y seguimiento que garanticen la correcta adopción del modelo operativo.\n\nEl enfoque del proyecto busca minimizar riesgos durante la fase de arranque, asegurar la continuidad del servicio y lograr una operación estable, eficiente y alineada con los estándares de calidad de la compañía.","end":"2026-06-30","budget":"$ 00,000","name":"Diseño de gestion del cambio para inicio de operación Bogota","deps":["PRY-006","PRY-006"],"date":"2024-10-31","id":"PRY-001","impTotal":2.75,"tags":"compras,tecnología","leader":"Danel Olarte Lopez","status":"Pendiente de dependencia","start":"2025-11-01","impact":[2,4,2,3]},{"tags":"","impact":[5,3,4,5],"status":"Ejecución","leader":"Danel Olarte Lopez","start":"2025-05-08","date":"2025-03-08","impTotal":4.25,"id":"PRY-002","effort":[4,3,3,1],"notes":"","priority":1.55,"end":"2026-05-15","budget":"8´600.000","desc":"El proyecto de diseño del portal web de All Roads tiene como propósito crear una plataforma digital moderna, funcional y alineada con la identidad de la marca, que permita comunicar de manera clara su propuesta de valor y portafolio de servicios.\n\nIncluye el diseño de la experiencia de usuario (UX), la estructura de contenidos, el desarrollo visual y la implementación técnica del sitio, asegurando una navegación intuitiva y accesible desde distintos dispositivos.\n\nEl portal estará enfocado en fortalecer la presencia digital de la compañía, facilitar la interacción con clientes potenciales y apoyar los objetivos comerciales mediante herramientas que permitan la generación de contactos, compra de servicio y posicionamiento en el entorno digital.","deps":[],"name":"Portal Web de  All Roads ","obj":"Crear un portal web para All Roads que fortalezca su presencia digital, optimice la captación de clientes y consolide su posicionamiento en el mercado mediante una experiencia digital moderna y funcional.","effTotal":2.75},{"deps":[],"name":"Automatizacion de Cotizaciones (EC GROUP)","desc":"Este proyecto busca automatizar el proceso de cotizaciones de EC Group para hacerlo más rápido, organizado y confiable. La idea es dejar atrás los procesos manuales y crear una solución que permita generar cotizaciones de forma casi inmediata, con la información clara y estandarizada.\n\nIncluye la creación de herramientas como formularios, hojas de cálculo y plantillas que automaticen los cálculos, eviten errores y faciliten el envío de las propuestas a los clientes.\n\nCon esto se espera mejorar los tiempos de respuesta, facilitar el trabajo del equipo comercial y brindar una mejor experiencia al cliente.","end":"2026-05-31","budget":"$ 00,000","priority":1.63,"notes":"","effort":[3,2,1,2],"effTotal":2,"obj":"Automatizar el proceso de cotizaciones de EC Group mediante la implementación de herramientas digitales que permitan generar propuestas de manera ágil, estandarizada y eficiente.","status":"Diseño","start":"2025-08-08","leader":"Danel Olarte Lopez","impact":[3,2,3,5],"tags":"","id":"PRY-003","impTotal":3.25,"date":"2025-08-08"},{"tags":"","impact":[1,1,1,1],"start":"2025-08-08","leader":"Danel Olarte Lopez","status":"Diseño","date":"2025-06-08","id":"PRY-004","impTotal":1,"effort":[1,1,1,1],"notes":"","priority":1,"budget":"$ 00,000","end":"2026-05-11","desc":"Este proyecto busca automatizar la gestión de PQRS mediante la creación de un formulario de registro de casos y un sistema de reportes que permita organizar y hacer seguimiento a cada solicitud de manera sencilla.\n\nLa idea es centralizar toda la información en un solo lugar, facilitar el registro de los casos, mejorar el control del estado de cada uno y contar con reportes automáticos que ayuden a tomar decisiones.\n\nCon esto se espera reducir tiempos de respuesta, evitar reprocesos y tener mayor claridad sobre la gestión y atención de los casos.","name":"Automatizacion de reporte de PQRS y formulario de casos","deps":[],"obj":"Automatizar el registro y seguimiento de PQRS mediante la implementación de un formulario de casos y un sistema de reportes que permita centralizar la información, mejorar los tiempos de respuesta y facilitar la gestión.","effTotal":1},{"leader":"Danel Olarte Lopez","start":"2026-01-12","status":"Optimización","impact":[4,1,3,5],"tags":"","id":"PRY-005","impTotal":3.25,"date":"2025-12-08","desc":"Este proyecto busca crear el portafolio de servicios de All Roads, organizando de manera clara y atractiva toda la información sobre lo que ofrece la empresa.\n\nLa idea es contar con una herramienta comercial que facilite la presentación de los servicios, resalte los diferenciales y permita a los clientes entender fácilmente la propuesta de valor.\n\nCon esto se espera mejorar la comunicación comercial, generar mayor confianza en los clientes y apoyar la consecución de nuevas oportunidades de negocio.","budget":"$ 00,000","end":"2026-05-15","deps":[],"name":"Portafolio All Roads","notes":"","effort":[2,2,3,1],"priority":1.63,"obj":"Diseñar y estructurar el portafolio de servicios de All Roads de forma clara y atractiva, permitiendo comunicar su propuesta de valor y facilitar la presentación comercial a clientes potenciales.","effTotal":2},{"id":"PRY-006","name":"Calculadora de tarifas (Generales) _ Servicios Nacionales, en toda la flota","obj":"Desarrollar una herramienta de cálculo tarifario para servicios a nivel nacional que optimice la estructuración de precios, garantice coherencia en la oferta y fortalezca la gestión comercial.","desc":"Este proyecto busca crear una calculadora de tarifas para servicios generales que permita definir precios de forma rápida, clara y consistente para toda la flota.\n\nLa herramienta centralizará las variables clave como tipo de vehículo, distancia, tiempo, costos operativos y recargos, facilitando el cálculo automático de las tarifas y evitando errores manuales.\n\nCon esto se espera mejorar la agilidad en la cotización, mantener coherencia en los precios y apoyar la toma de decisiones comerciales con mayor claridad.","leader":"Danel Olarte Lopez","date":"2025-11-08","status":"Ejecución","start":"2026-04-27","end":"2026-08-31","budget":"$ 16´000.000","deps":[],"tags":"","impact":[5,5,4,4],"effort":[3,3,2,4],"impTotal":4.5,"effTotal":3,"priority":1.5,"notes":""},{"id":"PRY-007","name":"Reporte automático de Comportamiento operativo Mensual","obj":"Implementar un sistema de reporte automático de ventas que permita consolidar la información, mejorar la visibilidad del desempeño comercial y facilitar la toma de decisiones estratégicas.","desc":"Este proyecto busca automatizar la generación de reportes de ventas para tener información clara, actualizada y lista sin necesidad de hacerlo manualmente.\n\nLa idea es centralizar los datos de ventas y construir reportes automáticos que permitan ver el desempeño comercial por cliente, servicio, asesor o periodo, facilitando el análisis y la toma de decisiones.\n\nCon esto se espera ahorrar tiempo, reducir errores y tener mayor visibilidad del negocio en tiempo real.","leader":"Danel Olarte Lopez","date":"2025-11-08","status":"Finalizado","start":"2025-12-08","end":"2026-04-30","budget":"$ 00,000","deps":[],"tags":"","impact":[2,2,2,2],"effort":[1,1,1,1],"impTotal":2,"effTotal":1,"priority":2,"notes":""},{"impact":[3,2,3,5],"status":"Prefactibilidad","leader":"Luisa Correa","start":"2026-04-09","tags":"MARCA","id":"PRY-006","impTotal":3.25,"date":"2026-04-06","name":"Portafolio EC GROUP","deps":[],"end":"2026-04-23","budget":"","desc":"Implementar un sistema de reporte automático de ventas que permita consolidar la información, mejorar la visibilidad del desempeño comercial y facilitar la toma de decisiones estratégicas.","priority":1.08,"effort":[4,2,4,2],"notes":"Pendiente que entregen el manual de marca de EC GROUP","effTotal":3,"obj":"Implementar un sistema de reporte automático de ventas que permita consolidar la información, mejorar la visibilidad del desempeño comercial y facilitar la toma de decisiones estratégicas."},{"impTotal":4.25,"id":"PRY-008","date":"2025-11-09","status":"Prefactibilidad","start":"2026-04-13","leader":"Luisa Correa","impact":[5,2,5,5],"tags":"MARCA ","obj":"Diseñar una maqueta funcional y visualmente atractiva para el portal web de All Roads, que permita estructurar de manera clara la oferta de servicios, optimizar la experiencia del usuario y facilitar la conversión comercial. La maqueta deberá contemplar una navegación intuitiva, jerarquización estratégica de la información y alineación con la identidad de marca, integrando secciones clave como portafolio de servicios, cotización, contenido informativo y canales de contacto.  Adicionalmente, el diseño debe servir como base para el desarrollo técnico del portal, asegurando escalabilidad, adaptabilidad a dispositivos móviles y coherencia con los procesos comerciales y operativos de la organización.","effTotal":2.25,"desc":"El proyecto consiste en el diseño de una maqueta estructural y visual para el portal web de All Roads, enfocada en organizar de manera estratégica la información, los servicios y la propuesta de valor de la marca en un entorno digital claro, moderno y orientado a la conversión.\n\nEsta maqueta contemplará la definición de la arquitectura del sitio (mapa de navegación), la distribución de contenidos por secciones (inicio, servicios, cotización, nosotros, contacto, entre otros) y la construcción de una experiencia de usuario intuitiva que facilite el acceso a la información y el proceso de solicitud de servicios.\n\nAsimismo, se diseñarán los componentes visuales clave (estructura de páginas, jerarquía de contenidos, llamados a la acción, formularios y elementos gráficos) asegurando coherencia con la identidad corporativa y adaptabilidad a diferentes dispositivos (responsive design).\n\nLa maqueta servirá como guía base para el desarrollo en herramientas como Elementor, permitiendo una implementación más ágil, estandarizada y alineada con los objetivos comerciales, especialmente en la generación de leads y fortalecimiento de la presencia digital de All Roads.","end":"2026-04-30","budget":"$ 00,000","name":"Diseño de Maqueta__Portal Wed_All Roads","deps":[],"notes":"Sin Dependencias / Solicitud Urgente ","effort":[3,3,2,1],"priority":1.89},{"id":"PRY-009","name":"Cierre primera Fase_Plataforma _ ecgroupservicescol.com","obj":"Finalizar la primera fase de la plataforma ecgroupservicescol.com, validando el correcto funcionamiento de los módulos desarrollados y asegurando que cumplen con los requerimientos operativos definidos.","desc":"Actividad orientada a consolidar y validar los entregables de la primera fase del proyecto, verificando el funcionamiento de los módulos operativos, la integridad de la información y la alineación con los procesos definidos. Incluye pruebas, ajustes finales y aprobación para dar paso a la siguiente fase.","leader":"Danel Olarte Lopez","date":"2025-10-13","status":"Ejecución","start":"2026-10-28","end":"2026-04-30","budget":"","deps":[],"tags":"","impact":[4,2,4,4],"effort":[2,3,1,2],"impTotal":3.5,"effTotal":2,"priority":1.75,"notes":""}];
+const DEFAULT_TASKS=[{"due":"2026-03-20","id":"T-009","assign":"2025-11-05","ownerEmail":"gerenciademarca@ectransportes.com","obj":"Diseñar, estructurar y validar la operación piloto de EC Transportes en Bogotá, mediante la definición del modelo operativo, la gestión del cambio, el análisis de viabilidad financiera y la preparación de recursos, con el fin de garantizar una implementación eficiente y sostenible.","name":"Diseño del Cambio y Aprobación Estratégica","project":"PRY-001","status":"Completada","priority":"Alta","owner":"Danel Olarte Lopez","notes":"1.1\tIdentificación de clientes que requieren operación en Bogotá_ Reuniones Bogota\n1.2\tDiseño del Plan de Gestión del Cambio\n1.3\tDiseño del modelo operativo piloto (2 vehículos)\n1.4\tConstrucción de estructura de costos operativos Bogotá\n1.5\tDiseño de la estructura tarifaria para servicios en Bogotá (traslados y disponibilidades)\n1.6\tAnálisis de viabilidad financiera"},{"id":"T-014","name":"Revisión de Observaciones _ Gerencia Comercial & Dir. Administrativa","obj":"Revisar y analizar las observaciones presentadas por la Gerencia Comercial y la Dirección Administrativa, con el fin de determinar su viabilidad y, en los casos que aplique, incorporarlas en la próxima actualización.","project":"PRY-005","owner":"Claudia Gomez","ownerEmail":"gerencia@ectransportes.com","assign":"2026-04-09","due":"2026-04-10","status":"Completada","priority":"Alta","notes":""},{"priority":"Alta","owner":"Danel Olarte Lopez","notes":"","project":"PRY-006","name":"Reunion de contexto","status":"Completada","assign":"2026-04-09","ownerEmail":"gerenciademarca@ectransportes.com","obj":"Diseñar, estructurar y validar la operación piloto de EC Transportes en Bogotá, mediante la definición del modelo operativo, la gestión del cambio, el análisis de viabilidad financiera y la preparación de recursos, con el fin de garantizar una implementación eficiente y sostenible.","due":"2026-04-16","id":"T-005"},{"obj":"Definir todas las variables que afectan la tarifa..","ownerEmail":"gerenciademarca@ectransportes.com","assign":"2026-04-20","id":"T-014","due":"2026-04-24","notes":"Tareas:\n\nIdentificar tipos de servicios:\nTraslados\nDisposiciones\nServicios intermunicipales / nacionales\nLevantamiento de variables clave:\nDistancia (km)\nTiempo (horas/días)\nTipo de vehículo\nCiudad origen/destino\nViáticos (hospedaje, alimentación)\nPeajes\nServicios internos (esperas, recorridos adicionales)\nRevisión histórica de tarifas (datos reales EC Transportes)\nIdentificación de reglas comerciales actuales (mínimos, márgenes, excepciones)\n\nEntregable:\nDocumento maestro de variables + reglas de negocio","priority":"Alta","owner":"Danel Olarte Lopez","status":"Pendiente","name":"ENTENDIMIENTO Y LEVANTAMIENTO DE VARIABLES","project":"PRY-006"},{"id":"T-014","due":"2026-05-31","obj":"Construir la lógica matemática del cálculo.","assign":"2026-04-27","ownerEmail":"Pendiente@gmail.com","status":"Pendiente","name":"DISEÑO DEL MODELO TARIFARIO","project":"PRY-006","notes":"Tareas:\n\nDefinir estructura base del cálculo:\nCosto base por km\nCosto por hora\nCostos fijos (operativos)\nModelar componentes:\nFunción de distancia\nFunción de tiempo\nCostos adicionales (condicionales)\nDefinir reglas condicionales:\nSi hay pernocta → sumar hospedaje\nSi supera X horas → cambia tarifa\nSi es servicio interno → ajuste %\nDefinir márgenes comerciales\nSimulación de escenarios (casos reales vs cálculo nuevo)\n\nEntregable:\nModelo tarifario validado (puede ser en Excel o Google Sheets)","priority":"Alta","owner":"Proveedor Externo"},{"status":"Pendiente","project":"PRY-006","name":"PROTOTIPO EN GOOGLE SHEETS Y (O) APP","notes":"Tareas:\n\nConstrucción del modelo:\nInputs (datos del servicio)\nMotor de cálculo (fórmulas)\nOutputs (tarifa final)\nValidaciones:\nListas desplegables (tipo cliente, vehículo, ciudad)\nRestricciones de datos\nAutomatización básica:\nCálculo automático\nEstructura clara para el usuario\n\nEntregable:\nCalculadora funcional (versión interna)","owner":"Proveedor Externo","priority":"Alta","id":"T-007","due":"2026-06-05","obj":"Tener una primera versión funcional del cálculo.","assign":"2026-06-01","ownerEmail":"Pendiente@gmail.com"},{"status":"Pendiente","project":"PRY-006","name":"VALIDACIÓN OPERATIVA Y COMERCIAL","notes":"Tareas:\n\nPruebas con el equipo:\nOperaciones\nComercial\nComparación:\nTarifas actuales vs nuevas\nAjustes:\nMargen\nRedondeos\nExcepciones\nDefinir política de uso:\nCuándo se puede modificar\nCuándo es obligatorio usarla\n\nEntregable:\nModelo validado y aprobado","owner":"Danel Olarte Lopez","priority":"Alta","id":"T-009","due":"2026-06-25","obj":"Ajustar el modelo a la realidad del negocio.","ownerEmail":"gerenciademarca@ectransportes.com","assign":"2026-06-08"},{"ownerEmail":"Pendiente@gmail.com","assign":"2026-06-26","obj":"Hacer la herramienta usable y comercialmente eficiente.","due":"2026-07-20","id":"T-009","priority":"Alta","owner":"TI Externo","notes":"areas:\n\nDefinir experiencia de usuario (UX):\nFlujo de cotización\nSimplicidad\nDiseño visual:\nInputs claros\nResultados destacados\nOpciones de implementación:\nAppSheet\nWeb App (Apps Script)\nEstructura:\nFormulario de entrada\nResultado inmediato\nPosible exportación (PDF/cotización)\n\nEntregable:\n Prototipo visual funcional","project":"PRY-006","name":"DISEÑO DE INTERFAZ (FRONT)","status":"Pendiente"},{"obj":"Tener una herramienta lista para uso operativo.","ownerEmail":"gerenciademarca@ectransportes.com","assign":"2026-07-21","id":"T-010","due":"2026-07-31","notes":"Tareas:\n\nDesarrollo de versión final:\nAutomatización completa\nOptimización de fórmulas\nIntegraciones:\nBase de datos de clientes\nHistorial de cotizaciones\nGeneración de outputs:\nCotización lista para enviar\nControl de acceso:\nRoles (asesores, admin)\n\nEntregable:\nHerramienta lista para producción","priority":"Alta","owner":"Danel Olarte Lopez","status":"Pendiente","name":"DESARROLLO FINAL E INTEGRACIÓN","project":"PRY-006"},{"obj":"Asegurar adopción del equipo.","assign":"2026-08-03","ownerEmail":"gerenciademarca@ectransportes.com","id":"T-011","due":"2026-08-05","notes":"Tareas:\n\nCapacitación al equipo comercial\nCreación de instructivo:\nCómo cotizar\nBuenas prácticas\nAjustes finales post-uso\nSeguimiento inicial\n\nEntregable:\nHerramienta implementada + equipo capacitado","priority":"Alta","owner":"Danel Olarte Lopez","status":"Pendiente","project":"PRY-006","name":"IMPLEMENTACIÓN Y CAPACITACIÓN"},{"notes":"frentes en paralelo:\n\nCore del negocio (matemático)\nVariables\nFórmulas\nReglas\nCapa comercial (experiencia)\nInterfaz\nFacilidad de uso\nVelocidad de respuesta","priority":"Alta","owner":"Danel Olarte Lopez","status":"Pendiente","project":"PRY-006","name":"ESTRUCTURA GENERAL DEL PROYECTO","obj":"Ajustes sobre la marca","assign":"2026-04-24","ownerEmail":"gerenciademarca@ectransportes.com","id":"T-014","due":"2026-08-03"},{"status":"Pendiente","project":"PRY-006","name":"Reunion: Revisión_ costos de Servicios generales.","notes":"Entregables\n\nMatriz de costos validada:\nDocumento consolidado con todos los costos de servicios generales revisados y ajustados.\nVariables y supuestos definidos:\nListado claro de las variables que alimentan la calculadora (costos fijos, variables, operativos, márgenes, etc.).","priority":"Alta","owner":"Raul Velazquez","id":"T-015","due":"2026-04-15","obj":"Analizar la estructura de costos de los servicios generales para alinear criterios, identificar oportunidades de optimización y asegurar que la calculadora de costos refleje información confiable para la toma de decisiones.","ownerEmail":"ceo@ectransportes.com","assign":"2026-04-10"},{"id":"T-015","name":"Reunión de Reinicio","obj":"Establecer el punto de partida para la reactivación del proyecto, alineando expectativas, prioridades y próximos pasos.","project":"PRY-002","owner":"Danel Olarte Lopez","ownerEmail":"gerenciademarca@ectransportes.com","assign":"2026-04-16","due":"2026-04-16","status":"En proceso","priority":"Alta","notes":"Espacio destinado a revisar el estado actual del proyecto, identificar pendientes, ajustar el enfoque si es necesario y definir un plan de acción claro para su reactivación, asignando responsables y fechas de ejecución."},{"id":"T-014","name":"Ajuste de lógica de desactivación de conductores y gestión de servicios asociados","obj":"Se requiere modificar el comportamiento actual de la desactivación de conductores dentro de la plataforma ecgroupservicescol.com, ya que actualmente, al desactivar un conductor, este deja de aparecer en los registros y no es posible gestionar los servicios que tiene asignados.","project":"PRY-009","owner":"Alejandro Giraldo","ownerEmail":"alejandro.giraldot@udea.edu.co","assign":"2026-04-13","due":"2026-04-20","status":"Pendiente","priority":"Alta","notes":"La desactivación del conductor aplique únicamente para impedir su acceso a la plataforma.\nEl conductor continúe siendo visible en los registros históricos y operativos.\nLos servicios asociados a conductores desactivados sigan siendo accesibles, editables y gestionables por los usuarios con rol administrativo.\nSe mantenga la trazabilidad completa de los servicios, independientemente del estado del conductor."},{"id":"T-015","name":"Bloqueo de liquidación para servicios cancelados","obj":"Restringir la funcionalidad de liquidación en servicios cancelados, evitando que los conductores registren ingresos o gastos en estos casos.","project":"PRY-009","owner":"Alejandro Giraldo","ownerEmail":"alejandro.giraldot@udea.edu.co","assign":"2026-04-13","due":"2026-04-20","status":"Pendiente","priority":"Alta","notes":"Descripción:\nActualmente, la plataforma permite que los conductores registren ingresos y gastos en la liquidación incluso cuando un servicio ha sido cancelado, lo cual genera inconsistencias en la operación y en la información financiera.\n\nSe requiere ajustar la lógica del sistema para que:\n\nLos servicios con estado cancelado no permitan el acceso al módulo de liquidación.\nSe bloquee completamente la opción de registrar ingresos y gastos para estos servicios.\nNo se habilite la funcionalidad de liquidación para el conductor en servicios cancelados.\nSe garantice la integridad de la información operativa y financiera evitando registros indebidos."},{"id":"T-016","name":"Ajuste en validación y almacenamiento de números de contacto internacionales","obj":"Garantizar que los números de contacto, especialmente internacionales, se registren y almacenen completos sin pérdida de información.","project":"PRY-009","owner":"Alejandro Giraldo","ownerEmail":"alejandro.giraldot@udea.edu.co","assign":"2026-04-13","due":"2026-04-13","status":"Pendiente","priority":"Alta","notes":"Descripción:\nSe ha identificado que algunos números de contacto internacionales (por ejemplo, de Rusia) están siendo recortados en la plataforma, eliminando los últimos dígitos y generando inconsistencias en la información.\n\nSe requiere revisar y ajustar el proceso de captura, validación y almacenamiento de números telefónicos para que:\n\nSe permitan números de mayor longitud, acordes a estándares internacionales.\nNo se recorten ni modifiquen los dígitos ingresados por el usuario.\nSe garantice el almacenamiento completo del número, incluyendo prefijos internacionales.\nSe mantenga la integridad de los datos de contacto en todos los registros."}];
+const DEFAULT_HISTORY=[{"date":"2026-04-13","project":"PRY-009","user":"Danel Olarte Lopez","action":"Correo enviado: \"Ajuste en validación y almacenamiento de números de contacto internacionales\" → alejandro.giraldot@udea.edu.co"},{"date":"2026-04-13","project":"PRY-009","user":"Danel Olarte Lopez","action":"Correo enviado: \"Bloqueo de liquidación para servicios cancelados\" → alejandro.giraldot@udea.edu.co"},{"date":"2026-04-13","project":"PRY-009","user":"Danel Olarte Lopez","action":"Correo enviado: \"Ajuste de lógica de desactivación de conductores y gestión de servicios asociados\" → alejandro.giraldot@udea.edu.co"},{"date":"2026-04-13","project":"PRY-009","user":"Danel Olarte Lopez","action":"Tarea creada: Ajuste en validación y almacenamiento de números de contacto internacionales"},{"date":"2026-04-13","project":"PRY-009","user":"Danel Olarte Lopez","action":"Tarea creada: Bloqueo de liquidación para servicios cancelados"},{"date":"2026-04-13","project":"PRY-009","user":"Danel Olarte Lopez","action":"Tarea creada: Ajuste de lógica de desactivación de conductores y gestión de servicios asociados"},{"date":"2026-04-13","project":"PRY-009","user":"Danel Olarte Lopez","action":"Proyecto editado: Cierre primera Fase_Plataforma _ ecgroupservicescol.com"},{"date":"2026-04-13","project":"PRY-007","user":"Danel Olarte Lopez","action":"Proyecto editado: Reporte automático de Comportamiento operativo Mensual"},{"date":"2026-04-13","project":"PRY-009","user":"Danel Olarte Lopez","action":"Proyecto editado: Cierre primera Fase_Plataforma _ ecgroupservicescol.com"},{"date":"2026-04-13","project":"PRY-009","user":"Danel Olarte Lopez","action":"Proyecto creado: Cierre primera Fase_Plataforma _ ecgroupservicescol.com"},{"date":"2026-04-13","project":"PRY-006","user":"Danel Olarte Lopez","action":"Proyecto editado: Calculadora de tarifas (Generales) _ Servicios Nacionales, en toda la flota"},{"date":"2026-04-13","project":"PRY-002","user":"Danel Olarte Lopez","action":"Tarea creada: Reunión de Reinicio"},{"project":"PRY-006","action":"Correo enviado: \"Reunion: Revisión_ costos de Servicios generales.\" → ceo@ectransportes.com","user":"Danel Olarte Lopez","date":"2026-04-10"},{"user":"Danel Olarte Lopez","action":"Tarea creada: Reunion: Revisión_ costos de Servicios generales.","project":"","date":"2026-04-10"},{"date":"2026-04-10","project":"PRY-006","action":"Proyecto editado: Calculadora de tarifas (Generales) _ Servicios Nacionales, en toda la flota","user":"Danel Olarte Lopez"},{"project":"PRY-006","user":"Danel Olarte Lopez","action":"Correo enviado: \"ENTENDIMIENTO Y LEVANTAMIENTO DE VARIABLES\" → gerenciademarca@ectransportes.com","date":"2026-04-10"},{"date":"2026-04-10","project":"PRY-001","user":"Danel Olarte Lopez","action":"Proyecto editado: Diseño de gestion del cambio para inicio de operación Bogota"},{"date":"2026-04-09","project":"PRY-008","action":"Proyecto creado: Diseño de Maqueta__Portal Wed_All Roads","user":"Danel Olarte Lopez"},{"action":"Proyecto editado: Calculadora de tarifas (Generales) _ Servicios Nacionales, en toda la flota","user":"Danel Olarte Lopez","project":"PRY-006","date":"2026-04-09"},{"date":"2026-04-09","project":"PRY-006","action":"Proyecto editado: Portafolio EC GROUP","user":"Danel Olarte Lopez"},{"project":"PRY-007","user":"Danel Olarte Lopez","action":"Proyecto eliminado","date":"2026-04-09"},{"project":"PRY-007","user":"Claudia Gomez","action":"Correo enviado: \"Configuración ERPS\" → gerencia@ectransportes.com","date":"2026-04-09"},{"date":"2026-04-09","project":"PRY-007","action":"Tarea creada: Configuración ERPS","user":"Claudia Gomez"},{"date":"2026-04-09","action":"Proyecto editado: Prueba","user":"Claudia Gomez","project":"PRY-007"},{"user":"Claudia Gomez","action":"Proyecto creado: Prueba","project":"PRY-007","date":"2026-04-09"},{"date":"2026-04-09","action":"Tarea creada: ESTRUCTURA GENERAL DEL PROYECTO","user":"Danel Olarte Lopez","project":"PRY-006"},{"date":"2026-04-09","project":"PRY-006","user":"Danel Olarte Lopez","action":"Tarea creada: IMPLEMENTACIÓN Y CAPACITACIÓN"},{"project":"PRY-006","action":"Tarea creada: DESARROLLO FINAL E INTEGRACIÓN","user":"Danel Olarte Lopez","date":"2026-04-09"},{"project":"PRY-006","user":"Danel Olarte Lopez","action":"Tarea creada: DISEÑO DE INTERFAZ (FRONT)","date":"2026-04-09"},{"user":"Danel Olarte Lopez","action":"Tarea creada: VALIDACIÓN OPERATIVA Y COMERCIAL","project":"","date":"2026-04-09"},{"date":"2026-04-09","action":"Tarea creada: PROTOTIPO EN GOOGLE SHEETS Y (O) APP","user":"Danel Olarte Lopez","project":"PRY-006"},{"date":"2026-04-09","project":"PRY-006","user":"Danel Olarte Lopez","action":"Tarea creada: DISEÑO DEL MODELO TARIFARIO"},{"date":"2026-04-09","project":"PRY-006","user":"Danel Olarte Lopez","action":"Correo enviado: \"ENTENDIMIENTO Y LEVANTAMIENTO DE VARIABLES\" → gerenciademarca@ectransportes.com"},{"project":"PRY-006","user":"Danel Olarte Lopez","action":"Tarea creada: ENTENDIMIENTO Y LEVANTAMIENTO DE VARIABLES","date":"2026-04-09"},{"date":"2026-04-09","user":"Danel Olarte Lopez","action":"Correo enviado: \"Reunion de contexto\" → gerenciademarca@ectransportes.com","project":"PRY-006"},{"project":"PRY-006","user":"Danel Olarte Lopez","action":"Tarea creada: Reunion de contexto","date":"2026-04-09"},{"date":"2026-04-09","project":"PRY-006","action":"Proyecto creado: Portafolio EC GROUP","user":"Danel Olarte Lopez"},{"project":"PRY-005","action":"Correo enviado: \"Revisión de Observaciones _ Gerencia Comercial & Dir. Administrativa\" → gerencia@ectransportes.com","user":"Danel Olarte Lopez","date":"2026-04-09"},{"action":"Tarea creada: Revisión de Observaciones _ Gerencia Comercial & Dir. Administrativa","user":"Danel Olarte Lopez","project":"PRY-005","date":"2026-04-09"},{"date":"2026-04-09","project":"PRY-003","user":"Claudia Gomez","action":"Proyecto editado: Automatizacion de Cotizaciones (EC GROUP)"},{"date":"2026-04-09","user":"Claudia Gomez","action":"Proyecto editado: Reporte automático de Comportamiento operativo Mensual","project":"PRY-007"},{"date":"2026-04-09","project":"PRY-001","action":"Proyecto editado: Diseño de gestion del cambio para inicio de operación Bogota","user":"Claudia Gomez"},{"action":"Proyecto editado: Diseño de gestion del cambio para inicio de operación Bogota","user":"Claudia Gomez","project":"PRY-001","date":"2026-04-09"},{"project":"PRY-001","action":"Proyecto editado: Diseño de gestion del cambio para inicio de operación Bogota","user":"Claudia Gomez","date":"2026-04-09"},{"project":"PRY-001","action":"Correo enviado: \"Diseño del Cambio y Aprobación Estratégica\" → gerenciademarca@ectransportes.com","user":"Claudia Gomez","date":"2026-04-09"},{"user":"Danel Olarte Lopez","action":"Proyecto editado: Portafolio All Roads","project":"PRY-005","date":"2026-04-09"},{"date":"2026-04-09","user":"Danel Olarte Lopez","action":"Correo enviado: \"Diseño de encuestas NPS\" → gerencia@ectransportes.com","project":"PRY-002"},{"project":"PRY-002","user":"Danel Olarte Lopez","action":"Correo enviado: \"Diseño de encuestas NPS\" → gerencia@ectransportes.com","date":"2026-04-09"},{"project":"PRY-006","action":"Proyecto editado: Reporte automático de Comportamiento operativo Mensual","user":"Danel Olarte Lopez","date":"2026-04-09"},{"user":"Danel Olarte Lopez","action":"Proyecto editado: Reporte automático de Comportamiento operativo","project":"PRY-006","date":"2026-04-09"},{"date":"2026-04-09","project":"PRY-006","action":"Proyecto editado: Reporte automático de Comportamiento operativo","user":"Danel Olarte Lopez"},{"action":"Proyecto creado: Reporte automático de ventas","user":"Danel Olarte Lopez","project":"PRY-006","date":"2026-04-09"},{"project":"PRY-001","user":"Danel Olarte Lopez","action":"Proyecto editado: Diseño de gestion del cambio para inicio de operación Bogota","date":"2026-04-09"},{"user":"Danel Olarte Lopez","action":"Proyecto editado: Calculadora de tarifas (Generales) _ Servicios Nacionales, en toda la flota","project":"PRY-006","date":"2026-04-09"},{"project":"PRY-006","action":"Proyecto creado: Calculadora de tarifas (Generales) _ Servicios Nacionales, en toda la flota","user":"Danel Olarte Lopez","date":"2026-04-09"},{"action":"Proyecto creado: Portafolio All Roads","user":"Danel Olarte Lopez","project":"PRY-005","date":"2026-04-09"},{"action":"Proyecto creado: Automatizacion de reporte de PQRS y formulario de casos","user":"Danel Olarte Lopez","project":"PRY-004","date":"2026-04-09"},{"project":"PRY-003","user":"Danel Olarte Lopez","action":"Proyecto editado: Automatizacion de Cotizaciones (EC GROUP)","date":"2026-04-09"},{"date":"2026-04-09","project":"PRY-001","user":"Danel Olarte Lopez","action":"Proyecto editado: Diseño de gestion del cambio para inicio de operación Bogota"},{"action":"Proyecto editado: Automatizacion de Cotizaciones (EC GROUP)","user":"Danel Olarte Lopez","project":"PRY-003","date":"2026-04-09"},{"project":"PRY-003","user":"Danel Olarte Lopez","action":"Proyecto creado: Automatizacion de Cotizaciones (EC GROUP)","date":"2026-04-09"},{"user":"Danel Olarte Lopez","action":"Proyecto editado: Portal Web de  All Roads ","project":"PRY-002","date":"2026-04-09"},{"date":"2026-04-09","user":"Danel Olarte Lopez","action":"Correo enviado: \"Diseño del Cambio y Aprobación Estratégica\" → gerenciademarca@ectransportes.com","project":"PRY-001"},{"date":"2026-04-09","action":"Proyecto editado: Diseño de gestion del cambio para inicio de operación Bogota","user":"Danel Olarte Lopez","project":"PRY-001"},{"date":"2026-04-09","project":"PRY-002","action":"Proyecto editado: Portal Web de  All Roads ","user":"Danel Olarte Lopez"},{"user":"Danel Olarte Lopez","action":"Proyecto editado: Portal Web de  All Roads ","project":"PRY-002","date":"2026-04-09"},{"date":"2026-04-09","project":"PRY-002","action":"Proyecto editado: Portal Web de  All Roads ","user":"Danel Olarte Lopez"},{"project":"PRY-002","action":"Proyecto creado: Portal Web de  All Roads ","user":"Danel Olarte Lopez","date":"2026-04-09"},{"action":"Proyecto editado: Portal de proveedores","user":"Danel Olarte Lopez","project":"PRY-001","date":"2026-04-09"},{"date":"2026-04-09","project":"—","user":"Danel Olarte Lopez","action":"Miembro editado: Claudia Gomez → Claudia Gomez"},{"date":"2024-04-01","project":"PRY-001","user":"Ana Torres","action":"Estado cambiado de \"Diseño\" a \"Ejecución\""},{"date":"2024-03-20","project":"PRY-005","action":"Proyecto marcado como Finalizado","user":"Sofía Pérez"}];
+
+// ─── FIREBASE SETUP ──────────────────────────────────────────────────────────
+// Firebase loaded via CDN scripts above
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBqpZxcEsq-CO0EXqhxv6ARh3roDEnKP8M",
+  authDomain: "ec-project-platform.firebaseapp.com",
+  projectId: "ec-project-platform",
+  storageBucket: "ec-project-platform.firebasestorage.app",
+  messagingSenderId: "136091015578",
+  appId: "1:136091015578:web:8eb5741098ffe908e98223"
+};
+let db = null;
+let _firebaseOk = false;
+try {
+  const fbApp = firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore(fbApp);
+  _firebaseOk = true;
+} catch(e) {
+  console.warn('Firebase init failed:', e);
+}
+const DB_COL = 'ecproject';
+const DB_ID  = 'data';
+
+// ─── PERSISTENCIA FIRESTORE ───────────────────────────────────────────────────
+async function persist(){
+  // Guardar siempre en localStorage como respaldo
+  try{
+    localStorage.setItem('ecpm_users',JSON.stringify(users));
+    localStorage.setItem('ecpm_projects',JSON.stringify(projects));
+    localStorage.setItem('ecpm_tasks',JSON.stringify(tasks));
+    localStorage.setItem('ecpm_history',JSON.stringify(history));
+  }catch(le){console.warn('localStorage error:',le);}
+  // Guardar en Firebase si está disponible
+  if(!db||!_firebaseOk)return;
+  try{
+    await db.collection(DB_COL).doc(DB_ID).set({users,projects,tasks,history});
+  }catch(e){
+    console.warn('Firebase write error:',e);
+  }
+}
+
+// ─── TIEMPO REAL — onSnapshot ─────────────────────────────────────────────────
+// Flag para ignorar el primer snapshot cuando somos nosotros quien acaba de escribir
+let _suppressNextSnapshot = false;
+
+function startRealtimeListener(){
+  if(!db||!_firebaseOk)return; // Sin Firebase, no hay tiempo real
+  db.collection(DB_COL).doc(DB_ID).onSnapshot(snap=>{
+    if(_suppressNextSnapshot){_suppressNextSnapshot=false;return;}
+    if(!snap.exists())return;
+    const d=snap.data();
+    users    = d.users    || DEFAULT_USERS;
+    projects = d.projects || DEFAULT_PROJECTS;
+    tasks    = d.tasks    || DEFAULT_TASKS;
+    history  = d.history  || DEFAULT_HISTORY;
+
+    // Si hay sesión activa, refrescar la vista actual sin cerrar sesión
+    if(currentUser){
+      // Actualizar currentUser por si cambió su propio registro
+      const refreshed=users.find(u=>u.email===currentUser.email);
+      if(refreshed) currentUser=refreshed;
+
+      // Refrescar la página activa
+      const activePage=document.querySelector('.page.active');
+      if(activePage){
+        const pid=activePage.id.replace('page-','');
+        if(pid==='dashboard')renderDashboard();
+        else if(pid==='projects')renderProjects();
+        else if(pid==='kanban')renderKanban();
+        else if(pid==='tasks')renderTasks();
+        else if(pid==='team')renderTeam();
+        else if(pid==='users')renderUsers();
+        else if(pid==='history')renderHistory();
+        else if(pid==='timeline')renderTimeline();
+      }
+    }
+  }, err=>{
+    console.warn('onSnapshot error:',err);
+  });
+}
+
+async function loadFromFirebase(){
+  showLoadingOverlay(true,'Cargando plataforma...');
+
+  // Si se abre desde file://, Firebase no funciona — cargar datos locales directamente
+  const isLocal = location.protocol === 'file:';
+
+  if(isLocal){
+    // Intentar localStorage primero, luego defaults del backup
+    users    = JSON.parse(localStorage.getItem('ecpm_users')   ||'null') || DEFAULT_USERS;
+    projects = JSON.parse(localStorage.getItem('ecpm_projects')||'null') || DEFAULT_PROJECTS;
+    tasks    = JSON.parse(localStorage.getItem('ecpm_tasks')   ||'null') || DEFAULT_TASKS;
+    history  = JSON.parse(localStorage.getItem('ecpm_history') ||'null') || DEFAULT_HISTORY;
+    showLoadingOverlay(false);
+    // Restaurar sesión
+    _restoreSession();
+    return; // No intentar Firebase
+  }
+
+  // ── Desde http:// o https:// — conectar Firebase con timeout ──────────────
+  if(_firebaseOk){
+    try{
+      await new Promise((resolve)=>{
+        const timer=setTimeout(()=>{
+          console.warn('Firebase timeout — usando datos locales');
+          resolve('timeout');
+        }, 5000);
+
+        const unsub=db.collection(DB_COL).doc(DB_ID).onSnapshot(snap=>{
+          clearTimeout(timer);
+          unsub();
+          if(snap.exists()){
+            const d=snap.data();
+            users    = d.users    || DEFAULT_USERS;
+            projects = d.projects || DEFAULT_PROJECTS;
+            tasks    = d.tasks    || DEFAULT_TASKS;
+            history  = d.history  || DEFAULT_HISTORY;
+          } else {
+            users=DEFAULT_USERS; projects=DEFAULT_PROJECTS;
+            tasks=DEFAULT_TASKS; history=DEFAULT_HISTORY;
+            persist();
+          }
+          resolve('ok');
+        }, err=>{
+          clearTimeout(timer);
+          console.warn('Firebase onSnapshot error:',err);
+          resolve('error');
+        });
+      });
+    }catch(e){
+      console.warn('Firebase initial load exception:',e);
+    }
+  }
+
+  // Si no se cargó nada desde Firebase, usar localStorage o defaults
+  if(!users.length){
+    users    = JSON.parse(localStorage.getItem('ecpm_users')   ||'null') || DEFAULT_USERS;
+    projects = JSON.parse(localStorage.getItem('ecpm_projects')||'null') || DEFAULT_PROJECTS;
+    tasks    = JSON.parse(localStorage.getItem('ecpm_tasks')   ||'null') || DEFAULT_TASKS;
+    history  = JSON.parse(localStorage.getItem('ecpm_history') ||'null') || DEFAULT_HISTORY;
+  }
+
+  // Iniciar escucha en tiempo real
+  startRealtimeListener();
+
+  // Reparación única: hashear contraseñas en texto plano si las hay
+  let repaired=false;
+  for(const u of users){
+    if(u.pass && u.pass.length < 60 && !u.pass.startsWith('##')){
+      u.pass = await sha256(u.pass);
+      repaired=true;
+    }
+  }
+  if(repaired) await persist();
+
+  // Restaurar sesión
+  _restoreSession();
+}
+
+function _restoreSession(){
+  showLoadingOverlay(false);
+  const savedSession=sessionStorage.getItem('ecpm_session');
+  if(savedSession){
+    try{
+      const saved=JSON.parse(savedSession);
+      const u=users.find(x=>x.email===saved.email&&x.active);
+      if(u){currentUser=u;showApp(u);return;}
+    }catch(e){}
+    sessionStorage.removeItem('ecpm_session');
+  }
+}
+
+function showLoadingOverlay(show, msg='Conectando con la base de datos...'){
+  const el=document.getElementById('loading-overlay');
+  if(!el)return;
+  el.style.display=show?'flex':'none';
+  const msgEl=el.querySelector('.loading-msg');
+  if(msgEl)msgEl.textContent=msg;
+}
+
+function showApp(u){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-shell').style.display='flex';
+  document.getElementById('sb-name').textContent=u.name;
+  document.getElementById('sb-role').textContent={admin:'Administrador',editor:'Editor',viewer:'Visualizador'}[u.role]||u.role;
+  document.getElementById('sb-avatar').textContent=u.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+  document.getElementById('nav-users').style.display=u.role==='admin'?'flex':'none';
+  renderDashboard();
+}
+
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+let users=[], projects=[], tasks=[], history=[];
+
+let currentUser=null;
+let editUserIdx=-1;
+let editIdx=-1,editTaskIdx=-1;
+let impScores=[1,1,1,1],effScores=[1,1,1,1];
+let emailPreviewTask=null;
+
+const statusColors={Prefactibilidad:'b-gray',Diseño:'b-blue','Gestión del Cambio':'b-purple',Ejecución:'b-amber',Optimización:'b-teal',Finalizado:'b-green','Pendiente de dependencia':'b-red'};
+const taskColors={Pendiente:'b-gray','En proceso':'b-amber',Completada:'b-green',Bloqueada:'b-red'};
+
+// ─── SHA-256 HASH (Web Crypto API nativa del navegador) ───────────────────────
+async function sha256(str){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ─── AUTH ────────────────────────────────────────────────────────────────────
+async function doLogin(){
+  const email=document.getElementById('l-email').value.trim().toLowerCase();
+  const rawPass=document.getElementById('l-pass').value;
+  const hashed=await sha256(rawPass);
+  const u=users.find(x=>x.email.toLowerCase()===email&&x.pass===hashed&&x.active);
+  const err=document.getElementById('login-err');
+  if(!u){err.style.display='block';return;}
+  err.style.display='none';
+  currentUser=u;
+  sessionStorage.setItem('ecpm_session',JSON.stringify({email:u.email}));
+  showApp(u);
+  showToast('Bienvenido, '+u.name,'success');
+}
+function doLogout(){
+  currentUser=null;
+  sessionStorage.removeItem('ecpm_session');
+  document.getElementById('app-shell').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('l-email').value='';
+  document.getElementById('l-pass').value='';
+}
+
+// ─── TOAST ──────────────────────────────────────────────────────────────────
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast'+(type?' '+type:'');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ─── NAVIGATION ─────────────────────────────────────────────────────────────
+function nav(page){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const titles={dashboard:'Dashboard',projects:'Proyectos',kanban:'Tablero Kanban',timeline:'Cronograma',tasks:'Tareas',team:'Equipo',users:'Gestión de usuarios',history:'Historial de gestión'};
+  document.getElementById('page-title').textContent=titles[page]||page;
+  const navEl=document.querySelector(`.nav-item[onclick="nav('${page}')"]`);
+  if(navEl)navEl.classList.add('active');
+  const pageEl=document.getElementById('page-'+page);
+  if(pageEl)pageEl.classList.add('active');
+  const ta=document.getElementById('topbar-actions');
+  ta.style.display=(page==='users'||page==='history'||page==='kanban'||page==='timeline')&&page!=='dashboard'?'none':'flex';
+  if(page==='dashboard')renderDashboard();
+  if(page==='projects')renderProjects();
+  if(page==='kanban')renderKanban();
+  if(page==='timeline')renderTimeline();
+  if(page==='tasks')renderTasks();
+  if(page==='team')renderTeam();
+  if(page==='users')renderUsers();
+  if(page==='history')renderHistory();
+}
+
+// ─── MODALS ──────────────────────────────────────────────────────────────────
+function openModal(id){
+  if(id==='new-project'){editIdx=-1;document.getElementById('project-modal-title').textContent='Nuevo proyecto';resetProjectForm();buildDepCheckboxes();}
+  if(id==='new-task'){editTaskIdx=-1;document.getElementById('task-modal-title').textContent='Nueva tarea';resetTaskForm();populateTaskProjectSelect();}
+  if(id==='new-user'){editUserIdx=-1;document.getElementById('user-modal-title').textContent='Nuevo usuario';resetUserForm();}
+  document.getElementById('modal-'+id).classList.add('open');
+}
+function closeModal(id){document.getElementById('modal-'+id).classList.remove('open');}
+function resetProjectForm(){
+  ['p-id','p-name','p-obj','p-desc','p-leader','p-date','p-start','p-end','p-budget','p-dep-notes','p-tags'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('p-status').value='Prefactibilidad';
+  impScores=[1,1,1,1];effScores=[1,1,1,1];renderStars();updatePriority();switchTab('general');
+}
+function updateOwnerFields(){
+  const n=parseInt(document.getElementById('t-owner-count')?.value||'1');
+  const c=document.getElementById('t-owners-container');if(!c)return;
+  c.innerHTML='';
+  for(let i=0;i<n;i++){
+    c.innerHTML+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px;margin-bottom:8px;padding:8px 10px;background:var(--bg-secondary);border-radius:var(--radius-md);border:1px solid var(--border-main)">
+      <div style="grid-column:span 2;font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;margin-bottom:6px">
+        Co-responsable ${i+1}
+      </div>
+      <div><label style="margin-top:0">Nombre</label><input id="t-owner-${i}" placeholder="Nombre" value=""></div>
+      <div><label style="margin-top:0">Correo</label><input id="t-email-${i}" type="email" placeholder="correo@empresa.com" value=""></div>
+    </div>`;
+  }
+}
+function resetTaskForm(){
+  ['t-name','t-obj','t-assign','t-due','t-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('t-status').value='Pendiente';
+  document.getElementById('t-prio').value='Alta';
+  if(document.getElementById('t-owner-count'))document.getElementById('t-owner-count').value='1';
+  updateOwnerFields();
+}
+function resetUserForm(){
+  ['u-name','u-email','u-pass','u-pass2','u-dept'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('u-role').value='editor';document.getElementById('u-active').value='1';
+}
+function switchTab(tab){
+  ['general','evaluation','detail'].forEach(t=>{document.getElementById('tab-'+t).style.display=t===tab?'block':'none';});
+  document.querySelectorAll('.tab').forEach((el,i)=>{el.classList.toggle('active',['general','evaluation','detail'][i]===tab);});
+}
+
+// ─── STARS / SCORING ─────────────────────────────────────────────────────────
+function buildStars(cid,arr,idx){
+  const c=document.getElementById(cid);if(!c)return;c.innerHTML='';
+  for(let v=1;v<=5;v++){
+    const s=document.createElement('div');s.className='star'+(arr[idx]>=v?' on':'');s.textContent=v;
+    s.onclick=(()=>{const vv=v,ii=idx,a=arr,ci=cid;return()=>{a[ii]=vv;buildStars(ci,a,ii);updatePriority();}})();
+    c.appendChild(s);
+  }
+}
+function renderStars(){
+  [0,1,2,3].forEach(i=>{buildStars('stars-imp'+(i+1),impScores,i);const v=document.getElementById('val-imp'+(i+1));if(v)v.textContent=impScores[i];});
+  [0,1,2,3].forEach(i=>{buildStars('stars-eff'+(i+1),effScores,i);const v=document.getElementById('val-eff'+(i+1));if(v)v.textContent=effScores[i];});
+}
+function updatePriority(){
+  renderStars();
+  const imp=impScores.reduce((a,b)=>a+b,0)/4;
+  const eff=effScores.reduce((a,b)=>a+b,0)/4;
+  const pri=imp/eff;
+  if(document.getElementById('imp-total'))document.getElementById('imp-total').textContent=imp.toFixed(2);
+  if(document.getElementById('eff-total'))document.getElementById('eff-total').textContent=eff.toFixed(2);
+  if(document.getElementById('priority-val'))document.getElementById('priority-val').textContent=pri.toFixed(2);
+  const badge=document.getElementById('priority-badge');
+  if(badge){if(pri>=1.5){badge.textContent='Alta';badge.className='badge b-green';}else if(pri>=1){badge.textContent='Media';badge.className='badge b-amber';}else{badge.textContent='Baja';badge.className='badge b-red';}}
+}
+renderStars();
+
+function buildDepCheckboxes(){
+  const c=document.getElementById('dep-checkboxes');if(!c)return;c.innerHTML='';
+  projects.forEach((p,i)=>{
+    if(editIdx>=0&&i===editIdx)return;
+    const lbl=document.createElement('label');
+    lbl.style.cssText='display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;cursor:pointer;margin:0;padding:5px 10px;border:1.5px solid var(--border-main);border-radius:var(--radius-md);background:var(--bg-secondary)';
+    const cb=document.createElement('input');cb.type='checkbox';cb.value=p.id;cb.style.width='auto';
+    if(editIdx>=0&&projects[editIdx].deps.includes(p.id))cb.checked=true;
+    lbl.appendChild(cb);lbl.appendChild(document.createTextNode(p.id+' – '+p.name.substring(0,22)));
+    c.appendChild(lbl);
+  });
+}
+
+// ─── SAVE / CRUD ──────────────────────────────────────────────────────────────
+async function saveProject(){
+  const deps=[...document.querySelectorAll('#dep-checkboxes input:checked')].map(c=>c.value);
+  const imp=impScores.reduce((a,b)=>a+b,0)/4;
+  const eff=effScores.reduce((a,b)=>a+b,0)/4;
+  const pri=imp/eff;
+  const p={id:document.getElementById('p-id').value||'PRY-'+(projects.length+1).toString().padStart(3,'0'),name:document.getElementById('p-name').value||'Sin nombre',obj:document.getElementById('p-obj').value,desc:document.getElementById('p-desc').value,leader:document.getElementById('p-leader').value,date:document.getElementById('p-date').value,status:document.getElementById('p-status').value,start:document.getElementById('p-start').value,end:document.getElementById('p-end').value,budget:document.getElementById('p-budget').value,deps,tags:document.getElementById('p-tags').value,impact:[...impScores],effort:[...effScores],impTotal:parseFloat(imp.toFixed(2)),effTotal:parseFloat(eff.toFixed(2)),priority:parseFloat(pri.toFixed(2)),notes:document.getElementById('p-dep-notes').value};
+  if(editIdx>=0){history.unshift({date:today(),project:p.id,user:currentUser?.name||'Usuario',action:'Proyecto editado: '+p.name});projects[editIdx]=p;showToast('Proyecto actualizado','success');}
+  else{history.unshift({date:today(),project:p.id,user:currentUser?.name||'Usuario',action:'Proyecto creado: '+p.name});projects.push(p);showToast('Proyecto creado','success');}
+  await persist();closeModal('new-project');renderProjects();renderDashboard();renderKanban();
+}
+async function saveTask(){
+  // Collect owners
+  const n=parseInt(document.getElementById('t-owner-count')?.value||'1');
+  const owners=[];
+  for(let i=0;i<n;i++){
+    const nm=(document.getElementById('t-owner-'+i)?.value||'').trim();
+    const em=(document.getElementById('t-email-'+i)?.value||'').trim();
+    if(nm)owners.push({name:nm,email:em,role:i===0?'principal':'participante'});
+  }
+  const mainOwner=owners[0]||{name:'',email:''};
+  const newData={
+    id:editTaskIdx>=0?tasks[editTaskIdx].id:'T-'+(tasks.length+1).toString().padStart(3,'0'),
+    name:document.getElementById('t-name').value||'Sin nombre',
+    obj:document.getElementById('t-obj').value,
+    project:document.getElementById('t-project').value,
+    owner:mainOwner.name,ownerEmail:mainOwner.email,
+    owners,
+    assign:document.getElementById('t-assign').value,
+    due:document.getElementById('t-due').value,
+    status:document.getElementById('t-status').value,
+    priority:document.getElementById('t-prio').value,
+    notes:document.getElementById('t-notes').value
+  };
+  if(editTaskIdx>=0){
+    const old=tasks[editTaskIdx];
+    const changes=[];
+    if(old.status!==newData.status)changes.push(`Estado: "${old.status}" → "${newData.status}"`);
+    if(old.priority!==newData.priority)changes.push(`Prioridad: "${old.priority}" → "${newData.priority}"`);
+    if(old.owner!==newData.owner)changes.push(`Responsable: "${old.owner||'—'}" → "${newData.owner||'—'}"`);
+    if(old.due!==newData.due)changes.push(`Entrega: "${old.due||'—'}" → "${newData.due||'—'}"`);
+    if(old.name!==newData.name)changes.push(`Nombre: "${old.name}" → "${newData.name}"`);
+    newData.taskHistory=[...(old.taskHistory||[])];
+    if(changes.length)newData.taskHistory.unshift({date:today(),user:currentUser?.name||'Usuario',changes:changes.join(' · ')});
+    tasks[editTaskIdx]=newData;
+    history.unshift({date:today(),project:newData.project,user:currentUser?.name||'Usuario',action:'Tarea editada: '+newData.name});
+    showToast('Tarea actualizada','success');
+  } else {
+    newData.taskHistory=[];
+    tasks.push(newData);
+    history.unshift({date:today(),project:newData.project,user:currentUser?.name||'Usuario',action:'Tarea creada: '+newData.name});
+    showToast('Tarea creada','success');
+  }
+  const retProj=_taskReturnProject;
+  await persist();
+  closeModal('new-task');
+  renderTasks();renderDashboard();renderKanban();
+  if(retProj){const pi=projects.findIndex(p=>p.id===retProj);if(pi>=0)setTimeout(()=>openDrawer(pi),50);_taskReturnProject=null;}
+}
+function cancelTaskModal(){
+  const ret=_taskReturnProject;
+  _taskReturnProject=null;
+  editTaskIdx=-1;
+  closeModal('new-task');
+  // Si venía desde el drawer de un proyecto, volver a abrirlo
+  if(ret){
+    const pi=projects.findIndex(p=>p.id===ret);
+    if(pi>=0){setTimeout(()=>openDrawer(pi),50);}
+  }
+}
+async function saveUser(){
+  const pass=document.getElementById('u-pass').value;
+  const pass2=document.getElementById('u-pass2').value;
+  if(pass!==pass2){showToast('Las contraseñas no coinciden','error');return;}
+  if(pass.length<6&&editUserIdx<0){showToast('La contraseña debe tener al menos 6 caracteres','error');return;}
+  const email=document.getElementById('u-email').value.trim().toLowerCase();
+  if(!email){showToast('El correo es obligatorio','error');return;}
+  const exists=users.find((u,i)=>u.email.toLowerCase()===email&&i!==editUserIdx);
+  if(exists){showToast('Ese correo ya existe','error');return;}
+  // Hash de contraseña — si se dejó vacía al editar, conservar la existente
+  const hashedPass=pass?await sha256(pass):(editUserIdx>=0?users[editUserIdx].pass:'');
+  const u={
+    id:editUserIdx>=0?users[editUserIdx].id:'U'+(users.length+1).toString().padStart(2,'0'),
+    name:document.getElementById('u-name').value||'Sin nombre',
+    email,pass:hashedPass,
+    role:document.getElementById('u-role').value,
+    dept:document.getElementById('u-dept').value,
+    active:document.getElementById('u-active').value==='1'
+  };
+  if(editUserIdx>=0){users[editUserIdx]=u;showToast('Usuario actualizado','success');}
+  else{users.push(u);showToast('Usuario creado','success');}
+  await persist();closeModal('new-user');renderUsers();
+}
+async function deleteUser(idx){
+  if(!confirm('¿Eliminar usuario '+users[idx].name+'?'))return;
+  if(currentUser&&users[idx].email===currentUser.email){showToast('No puedes eliminar tu propio usuario','error');return;}
+  users.splice(idx,1);await persist();renderUsers();showToast('Usuario eliminado');
+}
+function editUser(idx){
+  editUserIdx=idx;const u=users[idx];
+  document.getElementById('user-modal-title').textContent='Editar usuario';
+  document.getElementById('u-name').value=u.name;document.getElementById('u-email').value=u.email;
+  document.getElementById('u-pass').value='';document.getElementById('u-pass2').value='';
+  document.getElementById('u-role').value=u.role;document.getElementById('u-dept').value=u.dept||'';
+  document.getElementById('u-active').value=u.active?'1':'0';
+  document.getElementById('modal-new-user').classList.add('open');
+}
+
+function populateTaskProjectSelect(){
+  const sel=document.getElementById('t-project');sel.innerHTML='<option value="">Seleccionar proyecto...</option>';
+  projects.forEach(p=>sel.innerHTML+=`<option value="${p.id}">${p.id} – ${p.name}</option>`);
+}
+function priorityLabel(v){if(v>=1.5)return{text:'Alta',cls:'b-green'};if(v>=1)return{text:'Media',cls:'b-amber'};return{text:'Baja',cls:'b-red'};}
+function today(){return new Date().toISOString().split('T')[0];}
+
+// ─── EMAIL NOTIFICATION ──────────────────────────────────────────────────────
+function notifyTask(taskIdx){
+  const t=tasks[taskIdx];
+  const proj=projects.find(p=>p.id===t.project);
+  emailPreviewTask=t;
+  // Collect all owners with email
+  const allOwners=t.owners&&t.owners.length?t.owners.filter(o=>o.email):[{name:t.owner,email:t.ownerEmail}].filter(o=>o.email);
+  const toList=allOwners.map(o=>`${o.name} <${o.email}>`).join(', ')||'(sin email asignado)';
+  const coNames=allOwners.map(o=>o.name).join(', ')||t.owner||'Responsable';
+
+  document.getElementById('email-preview-content').innerHTML=`
+    <div style="background:#0f2040;color:#fff;padding:14px 18px;border-radius:8px 8px 0 0;margin:-16px -16px 16px -16px">
+      <div style="font-size:16px;font-weight:700">EC_Project — Notificación de Tarea</div>
+      <div style="font-size:11px;opacity:.7;margin-top:2px">Sistema de gestión de proyectos</div>
+    </div>
+    <p><strong>Para (${allOwners.length} co-responsable${allOwners.length>1?'s':''}):</strong> ${toList}</p>
+    <p style="margin-top:6px"><strong>Asunto:</strong> [EC_Project] Tarea asignada: ${t.name}</p>
+    <hr style="margin:12px 0;border:none;border-top:1px solid #e5e7eb">
+    <p>Estimado/a <strong>${coNames}</strong>,</p>
+    <p style="margin-top:8px">Se les ha asignado la siguiente tarea en la plataforma EC_Project:</p>
+    <div style="background:#f0f4fb;border-left:4px solid #1a6fba;padding:12px 14px;border-radius:0 8px 8px 0;margin:12px 0">
+      <p><strong>Tarea:</strong> ${t.name}</p>
+      <p><strong>Objetivo:</strong> ${t.obj||'—'}</p>
+      <p><strong>Proyecto:</strong> ${t.project}${proj?' – '+proj.name:''}</p>
+      <p><strong>Co-responsables:</strong> ${coNames}</p>
+      <p><strong>Prioridad:</strong> ${t.priority}</p>
+      <p><strong>Fecha de asignación:</strong> ${t.assign||'—'}</p>
+      <p><strong>Fecha de entrega:</strong> ${t.due||'—'}</p>
+      <p><strong>Estado actual:</strong> ${t.status}</p>
+      ${t.notes?`<p><strong>Notas:</strong> ${t.notes}</p>`:''}
+    </div>
+    <p style="margin-top:8px">Por favor acceda a la plataforma para gestionar y actualizar el estado de esta tarea.</p>
+    <hr style="margin:14px 0;border:none;border-top:1px solid #e5e7eb">
+    <p style="font-size:11px;color:#6b7280">EC_Project Management Platform · Enviado el ${new Date().toLocaleString('es-CO')} · Remitente: ${currentUser?.email||'sistema@empresa.com'}</p>`;
+  document.getElementById('modal-email-preview').classList.add('open');
+}
+
+function simulateSend(){
+  const t=emailPreviewTask;
+  if(!t){showToast('No hay tarea seleccionada','error');return;}
+  const allOwners=t.owners&&t.owners.length?t.owners.filter(o=>o.email):[{name:t.owner,email:t.ownerEmail}].filter(o=>o.email);
+  if(!allOwners.length){showToast('La tarea no tiene emails de responsables','error');return;}
+
+  const proj=projects.find(p=>p.id===t.project);
+  const sendBtn=document.querySelector('#modal-email-preview .btn-primary');
+  if(sendBtn){sendBtn.textContent='Enviando...';sendBtn.disabled=true;}
+
+  // Send to all owners sequentially
+  const coNames=allOwners.map(o=>o.name).join(', ');
+  const sends=allOwners.map(o=>
+    emailjs.send('service_jrw5zsv','template_8g7rbrh',{
+      to_email:o.email, to_name:o.name,
+      task_name:t.name, objective:t.obj||'—',
+      project:t.project+(proj?' – '+proj.name:''),
+      priority:t.priority, assign_date:t.assign||'—',
+      due_date:t.due||'—', status:t.status,
+      notes:t.notes||'—',
+      sent_by:currentUser?.name+' ('+currentUser?.email+')'
+    })
+  );
+
+  Promise.all(sends)
+    .then(async ()=>{
+      closeModal('email-preview');
+      const emails=allOwners.map(o=>o.email).join(', ');
+      history.unshift({date:today(),project:t.project,user:currentUser?.name||'Sistema',
+        action:`Notificación enviada a ${allOwners.length} co-responsable(s): "${t.name}" → ${emails}`});
+      await persist();
+      showToast(`Correo enviado a ${allOwners.length} responsable${allOwners.length>1?'s':''}`, 'success');
+    })
+    .catch(err=>{
+      console.error('EmailJS error:',err);
+      showToast('Error al enviar: '+(err?.text||'verifica tu configuración EmailJS'),'error');
+    })
+    .finally(()=>{
+      if(sendBtn){sendBtn.textContent='Enviar correo';sendBtn.disabled=false;}
+    });
+}
+
+// ─── RENDERS ─────────────────────────────────────────────────────────────────
+function renderDashboard(){
+  if(!currentUser) return;
+  const uname=currentUser.name;
+
+  // ── Global metrics ──────────────────────────────────────────────────────────
+  document.getElementById('m-total').textContent=projects.length;
+  document.getElementById('m-exec').textContent=projects.filter(p=>p.status==='Ejecución').length;
+  document.getElementById('m-tasks').textContent=tasks.filter(t=>t.status!=='Completada').length;
+  document.getElementById('m-done').textContent=projects.filter(p=>p.status==='Finalizado').length;
+
+  // ── My data ─────────────────────────────────────────────────────────────────
+  const myProjects=projects.filter(p=>p.leader===uname);
+  const myTasks=tasks.filter(t=>t.owner===uname||(t.owners&&t.owners.some(o=>o.name===uname)));
+
+  // ── Donut helper ────────────────────────────────────────────────────────────
+  function drawDonut(svgId,segments,total){
+    const svg=document.getElementById(svgId);if(!svg)return;
+    if(total===0){svg.innerHTML=`<circle cx="35" cy="35" r="26" fill="none" stroke="var(--border-main)" stroke-width="10"/><text x="35" y="39" text-anchor="middle" font-size="11" font-weight="700" fill="var(--text-secondary)">0</text>`;return;}
+    const R=26,CX=35,CY=35,SW=10;
+    let start=-Math.PI/2;
+    let paths='';
+    segments.forEach(([val,color])=>{
+      if(!val)return;
+      const angle=(val/total)*Math.PI*2;
+      const end=start+angle;
+      const x1=CX+R*Math.cos(start),y1=CY+R*Math.sin(start);
+      const x2=CX+R*Math.cos(end),y2=CY+R*Math.sin(end);
+      const large=angle>Math.PI?1:0;
+      paths+=`<path d="M${CX} ${CY} L${x1} ${y1} A${R} ${R} 0 ${large} 1 ${x2} ${y2} Z" fill="${color}" opacity=".85"/>`;
+      start=end;
+    });
+    svg.innerHTML=paths+`<circle cx="${CX}" cy="${CY}" r="${R-SW/2}" fill="var(--bg-primary)"/><text x="${CX}" y="${CY+4}" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text-primary)">${total}</text>`;
+  }
+
+  // ── MI GESTIÓN: Proyectos como líder ────────────────────────────────────────
+  document.getElementById('mg-proj-count').textContent=myProjects.length;
+  const projByStatus={};
+  myProjects.forEach(p=>{projByStatus[p.status]=(projByStatus[p.status]||0)+1;});
+  const projColors={'Ejecución':'#1a6fba','Finalizado':'#1a7a3c','Diseño':'#0369a1','Prefactibilidad':'#6b7280','Gestión del Cambio':'#5b21b6','Optimización':'#0f766e','Pendiente de dependencia':'#b91c1c'};
+  const projSegs=Object.entries(projByStatus).map(([s,v])=>[v,projColors[s]||'#888']);
+  drawDonut('mg-proj-donut',projSegs,myProjects.length);
+  const pl=document.getElementById('mg-proj-legend');pl.innerHTML='';
+  Object.entries(projByStatus).forEach(([s,v])=>{pl.innerHTML+=`<div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:8px;height:8px;border-radius:2px;background:${projColors[s]||'#888'}"></div><span style="color:var(--text-secondary)">${s} (${v})</span></div>`;});
+
+  // ── MI GESTIÓN: Tareas ───────────────────────────────────────────────────────
+  document.getElementById('mg-task-count').textContent=myTasks.length;
+  const taskByStatus={Completada:0,'En proceso':0,Pendiente:0,Bloqueada:0};
+  myTasks.forEach(t=>{taskByStatus[t.status]=(taskByStatus[t.status]||0)+1;});
+  const taskColors2={Completada:'#1a7a3c','En proceso':'#b45309',Pendiente:'#6b7280',Bloqueada:'#b91c1c'};
+  const taskSegs=Object.entries(taskByStatus).filter(([,v])=>v>0).map(([s,v])=>[v,taskColors2[s]]);
+  drawDonut('mg-task-donut',taskSegs,myTasks.length);
+  const tl=document.getElementById('mg-task-legend');tl.innerHTML='';
+  Object.entries(taskByStatus).forEach(([s,v])=>{if(!v)return;tl.innerHTML+=`<div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:8px;height:8px;border-radius:2px;background:${taskColors2[s]}"></div><span style="color:var(--text-secondary)">${s} (${v})</span></div>`;});
+
+  // ── MI GESTIÓN: Barras de progreso por prioridad ─────────────────────────────
+  const pb=document.getElementById('mg-progress-bars');pb.innerHTML='';
+  const prioColors={Alta:'#b91c1c',Media:'#b45309',Baja:'#1a7a3c'};
+  ['Alta','Media','Baja'].forEach(prio=>{
+    const pt=myTasks.filter(t=>t.priority===prio);
+    const pc=pt.filter(t=>t.status==='Completada').length;
+    const pct=pt.length?Math.round(pc/pt.length*100):0;
+    if(!pt.length)return;
+    pb.innerHTML+=`<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+        <span style="font-weight:600;color:${prioColors[prio]}">Prioridad ${prio}</span>
+        <span style="color:var(--text-secondary)">${pc}/${pt.length} · ${pct}%</span>
+      </div>
+      <div style="background:var(--bg-tertiary);border-radius:4px;height:8px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:${prioColors[prio]};border-radius:4px;transition:width .4s"></div>
+      </div>
+    </div>`;
+  });
+  if(!myTasks.length)pb.innerHTML='<div style="font-size:12px;color:var(--text-secondary);padding:8px 0">Sin tareas asignadas</div>';
+
+  // ── MIS PROYECTOS ─────────────────────────────────────────────────────────
+  document.getElementById('mis-proj-badge').textContent=myProjects.length;
+  const mpl=document.getElementById('mis-proyectos-list');mpl.innerHTML='';
+  if(!myProjects.length){
+    mpl.innerHTML='<div style="font-size:12px;color:var(--text-secondary);padding:8px 0">No tienes proyectos asignados como líder.</div>';
+  } else {
+    myProjects.forEach(p=>{
+      const mt2=tasks.filter(t=>t.project===p.id);
+      const dn2=mt2.filter(t=>t.status==='Completada').length;
+      const pct2=mt2.length?Math.round(dn2/mt2.length*100):0;
+      const pl2=priorityLabel(p.priority);
+      mpl.innerHTML+=`<div style="padding:10px 0;border-bottom:1px solid var(--border-main);cursor:pointer" onclick="showProjectDetail(${projects.indexOf(p)})">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px">
+          <div>
+            <span class="badge b-gray" style="font-size:10px;margin-right:5px">${p.id}</span>
+            <span style="font-size:13px;font-weight:600;color:var(--accent)">${p.name}</span>
+          </div>
+          <span class="badge ${statusColors[p.status]||'b-gray'}" style="font-size:10px;white-space:nowrap">${p.status}</span>
+        </div>
+        ${mt2.length?`<div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;background:var(--bg-tertiary);border-radius:3px;height:5px;overflow:hidden">
+            <div style="width:${pct2}%;height:100%;background:${pct2===100?'#1a7a3c':'#1a6fba'};border-radius:3px"></div>
+          </div>
+          <span style="font-size:10px;color:var(--text-secondary);white-space:nowrap">${dn2}/${mt2.length} tareas</span>
+          <span class="badge ${pl2.cls}" style="font-size:10px">${pl2.text}</span>
+        </div>`:'<span style="font-size:11px;color:var(--text-secondary)">Sin tareas</span>'}
+      </div>`;
+    });
+  }
+
+  // ── MIS TAREAS ────────────────────────────────────────────────────────────
+  document.getElementById('mis-task-badge').textContent=myTasks.length;
+  const mtl=document.getElementById('mis-tareas-list');mtl.innerHTML='';
+  const today2=new Date();today2.setHours(0,0,0,0);
+  if(!myTasks.length){
+    mtl.innerHTML='<div style="font-size:12px;color:var(--text-secondary);padding:8px 0">No tienes tareas asignadas.</div>';
+  } else {
+    // Sort: bloqueadas primero, luego por vencimiento
+    const sorted=[...myTasks].sort((a,b)=>{
+      if(a.status==='Bloqueada'&&b.status!=='Bloqueada')return -1;
+      if(b.status==='Bloqueada'&&a.status!=='Bloqueada')return 1;
+      if(a.status==='Completada'&&b.status!=='Completada')return 1;
+      if(b.status==='Completada'&&a.status!=='Completada')return -1;
+      return new Date(a.due||'9999')-new Date(b.due||'9999');
+    });
+    sorted.slice(0,8).forEach(t=>{
+      const tidx=tasks.indexOf(t);
+      const due=t.due?new Date(t.due):null;
+      const overdue=due&&due<today2&&t.status!=='Completada';
+      const dueStr=t.due||'—';
+      const tc2=taskColors2[t.status]||'#374151';
+      mtl.innerHTML+=`<div style="padding:9px 0;border-bottom:1px solid var(--border-main);cursor:pointer;display:flex;align-items:flex-start;gap:8px" onclick="showTaskDetail(${tidx})">
+        <div style="width:8px;height:8px;border-radius:50%;background:${tc2};margin-top:4px;flex-shrink:0"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-primary)">${t.name}</div>
+          <div style="display:flex;gap:6px;align-items:center;margin-top:3px;flex-wrap:wrap">
+            <span class="badge b-gray" style="font-size:10px">${t.project}</span>
+            <span style="font-size:11px;color:${overdue?'#b91c1c':'var(--text-secondary)'};font-weight:${overdue?'700':'400'}">${overdue?'⚠ Vencida: ':''}${dueStr}</span>
+          </div>
+        </div>
+        <span style="font-size:10px;color:#fff;background:${tc2};border-radius:3px;padding:2px 6px;flex-shrink:0;white-space:nowrap">${t.status}</span>
+      </div>`;
+    });
+    if(myTasks.length>8)mtl.innerHTML+=`<div style="font-size:12px;color:var(--accent);padding:8px 0;cursor:pointer" onclick="nav('tasks')">Ver todas las tareas (${myTasks.length}) →</div>`;
+  }
+
+  // ── DISTRIBUCIÓN GLOBAL: Barras ──────────────────────────────────────────
+  const sc={};projects.forEach(p=>{sc[p.status]=(sc[p.status]||0)+1;});
+  const maxCount=Math.max(1,...Object.values(sc));
+  const distB=document.getElementById('dist-bars');
+  const distL=document.getElementById('dist-legend');
+  distB.innerHTML='';distL.innerHTML='';
+  const distColors=projColors;
+  Object.entries(sc).forEach(([s,c])=>{
+    const h=Math.round((c/maxCount)*70);
+    const col=distColors[s]||'#888';
+    distB.innerHTML+=`<div style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer" onclick="nav('projects')" title="${s}: ${c}">
+      <span style="font-size:10px;font-weight:700;color:var(--text-primary)">${c}</span>
+      <div style="width:28px;height:${h}px;background:${col};border-radius:3px 3px 0 0;min-height:4px"></div>
+    </div>`;
+    distL.innerHTML+=`<div style="display:flex;align-items:center;gap:4px"><div style="width:8px;height:8px;border-radius:2px;background:${col};flex-shrink:0"></div><span style="font-size:10px;color:var(--text-secondary)">${s}</span></div>`;
+  });
+
+  // ── Tareas próximas a vencer ──────────────────────────────────────────────
+  const dt=document.getElementById('dashboard-tasks');dt.innerHTML='';
+  tasks.filter(t=>t.status!=='Completada'&&t.due)
+    .sort((a,b)=>new Date(a.due)-new Date(b.due))
+    .slice(0,6).forEach(t=>{
+      const due=new Date(t.due);
+      const overdue=due<today2;
+      dt.innerHTML+=`<tr style="cursor:pointer" onclick="showTaskDetail(${tasks.indexOf(t)})"><td style="font-weight:500;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name}</td><td><span class="badge b-gray" style="font-size:10px">${t.project}</span></td><td style="color:${overdue?'#b91c1c':'var(--text-primary)'};font-weight:${overdue?'700':'400'}">${t.due}</td><td><span class="badge ${taskColors[t.status]||'b-gray'}">${t.status}</span></td></tr>`;
+    });
+}
+function renderProjects(){
+  const q=(document.getElementById('search-projects')?.value||'').toLowerCase();
+  const sf=document.getElementById('filter-status')?.value||'';
+  const tb=document.getElementById('projects-tbody');tb.innerHTML='';
+  projects.filter(p=>(p.name.toLowerCase().includes(q)||p.id.toLowerCase().includes(q))&&(!sf||p.status===sf)).forEach(p=>{
+    const pl=priorityLabel(p.priority);
+    const db=p.deps.map(d=>`<span class="badge b-blue">${d}</span>`).join(' ')||'—';
+    const canEdit=currentUser&&(currentUser.role==='admin'||currentUser.role==='editor');
+    tb.innerHTML+=`<tr><td><span class="badge b-gray">${p.id}</span></td><td style="cursor:pointer;font-weight:600;color:var(--accent)" onclick="showProjectDetail(${projects.indexOf(p)})">${p.name}</td><td>${p.leader||'—'}</td><td><span class="badge ${statusColors[p.status]||'b-gray'}">${p.status}</span></td><td><span class="badge b-blue">${p.impTotal}</span></td><td><span class="badge b-amber">${p.effTotal}</span></td><td><span class="badge ${pl.cls}">${p.priority} (${pl.text})</span></td><td>${db}</td><td style="white-space:nowrap;display:flex;gap:4px">${canEdit?`<button class="btn btn-sm" onclick="editProject(${projects.indexOf(p)})">Editar</button>`:''}${canEdit&&currentUser.role==='admin'?`<button class="btn btn-sm btn-danger" onclick="deleteProject(${projects.indexOf(p)})">Eliminar</button>`:''}</td></tr>`;
+  });
+}
+async function deleteProject(idx){
+  if(!confirm('¿Eliminar proyecto '+projects[idx].name+'?'))return;
+  const id=projects[idx].id;
+  projects.splice(idx,1);
+  history.unshift({date:today(),project:id,user:currentUser?.name||'Usuario',action:'Proyecto eliminado'});
+  await persist();renderProjects();renderDashboard();renderKanban();showToast('Proyecto eliminado');
+}
+function editProject(idx){
+  editIdx=idx;const p=projects[idx];
+  document.getElementById('project-modal-title').textContent='Editar proyecto';
+  document.getElementById('p-id').value=p.id;document.getElementById('p-name').value=p.name;document.getElementById('p-obj').value=p.obj||'';document.getElementById('p-desc').value=p.desc||'';document.getElementById('p-leader').value=p.leader||'';document.getElementById('p-date').value=p.date||'';document.getElementById('p-status').value=p.status;document.getElementById('p-start').value=p.start||'';document.getElementById('p-end').value=p.end||'';document.getElementById('p-budget').value=p.budget||'';document.getElementById('p-dep-notes').value=p.notes||'';document.getElementById('p-tags').value=p.tags||'';
+  impScores=[...p.impact];effScores=[...p.effort];renderStars();updatePriority();buildDepCheckboxes();
+  document.getElementById('modal-new-project').classList.add('open');switchTab('general');
+}
+let _kbActiveTab=0;
+let _kbDrawerProjIdx=-1;
+
+function renderKanban(){
+  // My pending tasks strip
+  const myPending=tasks.filter(t=>t.owner===currentUser?.name&&t.status!=='Completada');
+  const today2=new Date();today2.setHours(0,0,0,0);
+  const myStrip=document.getElementById('kb-my-tasks');
+  const myCount=document.getElementById('kb-my-count');
+  if(myStrip){
+    myStrip.innerHTML='';
+    myCount.textContent=myPending.length;
+    if(!myPending.length){myStrip.innerHTML='<div style="font-size:12px;color:var(--text-secondary);padding:6px 0">Sin tareas pendientes 🎉</div>';}
+    else{
+      [...myPending].sort((a,b)=>new Date(a.due||'9999')-new Date(b.due||'9999')).slice(0,8).forEach(t=>{
+        const due=t.due?new Date(t.due):null;
+        const overdue=due&&due<today2;
+        const tc=ganttColors.taskStatus[t.status]||'#374151';
+        const tidx=tasks.indexOf(t);
+        const chip=document.createElement('div');
+        chip.style.cssText=`display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1.5px solid ${overdue?'#b91c1c':tc};background:${overdue?'#fee2e2':'var(--bg-primary)'}`;
+        chip.innerHTML=`<div style="width:7px;height:7px;border-radius:50%;background:${tc};flex-shrink:0"></div><span style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${overdue?'#b91c1c':'var(--text-primary)'}">${t.name}</span><span style="color:${overdue?'#b91c1c':'var(--text-secondary)'};font-size:10px">${t.project}${t.due?' · '+t.due:''}</span>`;
+        chip.onclick=()=>showTaskDetail(tidx);
+        myStrip.appendChild(chip);
+      });
+    }
+  }
+
+  // Kanban columns
+  const states=['Prefactibilidad','Diseño','Gestión del Cambio','Ejecución','Optimización','Finalizado','Pendiente de dependencia'];
+  const board=document.getElementById('kanban-board');board.innerHTML='';
+  states.forEach(s=>{
+    const ps=projects.filter(p=>p.status===s);
+    const col=document.createElement('div');col.className='k-col';
+    col.innerHTML=`<div class="k-col-title"><span>${s}</span><span class="badge ${statusColors[s]||'b-gray'}">${ps.length}</span></div>`;
+    ps.forEach(p=>{
+      const pl=priorityLabel(p.priority);
+      const ptasks=tasks.filter(t=>t.project===p.id);
+      const dn=ptasks.filter(t=>t.status==='Completada').length;
+      const pct=ptasks.length?Math.round(dn/ptasks.length*100):0;
+      const pending=ptasks.filter(t=>t.status!=='Completada').length;
+      const card=document.createElement('div');card.className='k-card';
+      card.innerHTML=`
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px">
+          <span class="badge b-gray" style="font-size:10px">${p.id}</span>
+          <span class="badge ${pl.cls}" style="font-size:10px">${pl.text}</span>
+        </div>
+        <div class="k-card-title">${p.name}</div>
+        <div class="k-card-meta">${p.leader||'Sin líder'}</div>
+        ${ptasks.length?`<div style="margin-top:8px"><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-secondary);margin-top:3px;font-weight:500">
+          <span>${dn}/${ptasks.length} tareas</span>
+          ${pending?`<span style="color:#b45309">${pending} pendiente${pending>1?'s':''}</span>`:'<span style="color:#1a7a3c">Todas completadas</span>'}
+        </div></div>`:'<div style="margin-top:6px;font-size:10px;color:var(--text-secondary)">Sin tareas aún</div>'}
+      `;
+      card.onclick=()=>openDrawer(projects.indexOf(p));
+      col.appendChild(card);
+    });
+    board.appendChild(col);
+  });
+
+  // Restore drawer if open
+  if(_kbDrawerProjIdx>=0)openDrawer(_kbDrawerProjIdx,false);
+}
+
+function openDrawer(pidx, animate=true){
+  _kbDrawerProjIdx=pidx;
+  const drawer=document.getElementById('kb-drawer');
+  drawer.style.width='420px';
+  kbdTab(_kbActiveTab);
+}
+
+function closeDrawer(){
+  _kbDrawerProjIdx=-1;
+  document.getElementById('kb-drawer').style.width='0';
+}
+
+function kbdTab(tabIdx){
+  _kbActiveTab=tabIdx;
+  document.querySelectorAll('.kbd-tab').forEach((t,i)=>t.classList.toggle('active',i===tabIdx));
+  if(_kbDrawerProjIdx<0)return;
+  const p=projects[_kbDrawerProjIdx];
+  if(!p)return;
+  document.getElementById('kbd-title').textContent=`${p.id} — ${p.name}`;
+  const content=document.getElementById('kbd-content');
+  const canEdit=currentUser&&(currentUser.role==='admin'||currentUser.role==='editor');
+  const pl=priorityLabel(p.priority);
+  const mt=tasks.filter(t=>t.project===p.id);
+  const dn=mt.filter(t=>t.status==='Completada').length;
+  const pct=mt.length?Math.round(dn/mt.length*100):0;
+  const today2=new Date();today2.setHours(0,0,0,0);
+
+  if(tabIdx===0){
+    // FICHA
+    const db=p.deps.map(d=>`<span class="badge b-blue">${d}</span>`).join(' ')||'Ninguna';
+    content.innerHTML=`
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+        <span class="badge ${statusColors[p.status]||'b-gray'}">${p.status}</span>
+        <span class="badge ${pl.cls}">Prioridad: ${p.priority}</span>
+        <span class="badge b-blue">Impacto: ${p.impTotal}</span>
+        <span class="badge b-amber">Esfuerzo: ${p.effTotal}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div><div style="font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:3px">Líder</div><div style="font-size:13px;font-weight:600">${p.leader||'—'}</div></div>
+        <div><div style="font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:3px">Período</div><div style="font-size:13px">${p.start||'—'} → ${p.end||'—'}</div></div>
+        <div><div style="font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:3px">Presupuesto</div><div style="font-size:13px;font-weight:600;color:var(--accent)">${p.budget||'—'}</div></div>
+        <div><div style="font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:3px">Avance</div><div class="progress-bar" style="height:8px;margin-top:6px"><div class="progress-fill" style="width:${pct}%"></div></div><div style="font-size:10px;color:var(--text-secondary);margin-top:2px">${dn}/${mt.length} tareas</div></div>
+      </div>
+      ${p.obj?`<div style="background:var(--bg-secondary);padding:10px;border-radius:var(--radius-md);font-size:12px;margin-bottom:10px"><strong>Objetivo:</strong> ${p.obj}</div>`:''}
+      <div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:5px">DEPENDENCIAS</div>
+      <div style="margin-bottom:12px">${db}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;border-top:1px solid var(--border-main);padding-top:12px">
+        <button class="btn btn-sm btn-primary" onclick="kbdTab(1)">Ver tareas →</button>
+        ${canEdit?`<button class="btn btn-sm" onclick="closeDrawer();editProject(${_kbDrawerProjIdx})">Editar proyecto</button>`:''}
+        <button class="btn btn-sm" onclick="closeDrawer();showProjectDetail(${_kbDrawerProjIdx})">Ficha completa</button>
+      </div>`;
+  } else if(tabIdx===1){
+    // TAREAS
+    const byStatus={Pendiente:[],'En proceso':[],Bloqueada:[],Completada:[]};
+    mt.forEach(t=>{(byStatus[t.status]||byStatus.Pendiente).push(t);});
+    let html='';
+    ['En proceso','Bloqueada','Pendiente','Completada'].forEach(s=>{
+      const stasks=byStatus[s]||[];
+      if(!stasks.length)return;
+      const tc=ganttColors.taskStatus[s]||'#374151';
+      html+=`<div style="font-size:10px;font-weight:700;color:#fff;background:${tc};padding:3px 8px;border-radius:3px;display:inline-block;margin-bottom:6px;margin-top:8px">${s} (${stasks.length})</div>`;
+      stasks.forEach(t=>{
+        const tidx=tasks.indexOf(t);
+        const due=t.due?new Date(t.due):null;
+        const overdue=due&&due<today2&&s!=='Completada';
+        const ownersStr=(t.owners&&t.owners.length>1)?t.owners.map(o=>o.name).join(', '):(t.owner||'—');
+        html+=`<div style="background:var(--bg-secondary);border-radius:var(--radius-md);padding:8px 10px;margin-bottom:6px;cursor:pointer;border:1px solid var(--border-main)" onclick="showTaskDetail(${tidx})">
+          <div style="font-size:12px;font-weight:600;color:var(--text-primary)">${t.name}</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:3px">${ownersStr}</div>
+          <div style="font-size:11px;color:${overdue?'#b91c1c':'var(--text-secondary)'};margin-top:2px;font-weight:${overdue?'700':'400'}">${t.due?'Entrega: '+t.due:'Sin fecha'} ${overdue?'⚠ Vencida':''}</div>
+        </div>`;
+      });
+    });
+    if(!mt.length)html='<div style="color:var(--text-secondary);font-size:12px;padding:12px 0">Sin tareas en este proyecto.</div>';
+    content.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:500;color:var(--text-secondary)">${dn}/${mt.length} completadas</div>
+        ${canEdit?`<button class="btn btn-sm btn-primary" onclick="openTaskFromDrawer(${_kbDrawerProjIdx})">+ Nueva tarea</button>`:''}
+      </div>
+      ${html}`;
+  } else {
+    // CRONOGRAMA mini
+    const projTasks=mt.filter(t=>t.assign&&t.due);
+    if(!projTasks.length){content.innerHTML='<div style="color:var(--text-secondary);font-size:12px;padding:12px 0">No hay tareas con fechas asignadas.</div>';return;}
+    const dates=projTasks.flatMap(t=>[new Date(t.assign),new Date(t.due)]);
+    let gs=new Date(Math.min(...dates));let ge=new Date(Math.max(...dates));
+    gs=new Date(gs.getFullYear(),gs.getMonth()-1,1);ge=new Date(ge.getFullYear(),ge.getMonth()+2,0);
+    const gweeks=tlWeeks(gs,ge);const GWCOL=36;const GLABELW=130;
+    const gtw=gweeks.length*GWCOL;
+    function gdpx(d){return Math.round(Math.max(0,Math.min(gtw,(d-gs)/86400000/7*GWCOL)));}
+    const todPx=gdpx(new Date());
+    const gMonths={};
+    gweeks.forEach(w=>{const k=w.getFullYear()+'-'+w.getMonth();if(!gMonths[k])gMonths[k]={label:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][w.getMonth()]+' '+w.getFullYear(),count:0};gMonths[k].count++;});
+    let mRow=`<div style="display:flex"><div style="width:${GLABELW}px;flex-shrink:0;background:var(--bg-secondary)"></div>`;
+    Object.values(gMonths).forEach(m=>{mRow+=`<div style="width:${m.count*GWCOL}px;flex-shrink:0;font-size:9px;font-weight:700;padding:3px 4px;background:var(--bg-secondary);border-left:1px solid var(--border-main)">${m.label}</div>`;});
+    mRow+=`</div>`;
+    let wRow=`<div style="display:flex;border-bottom:1.5px solid var(--border-main)"><div style="width:${GLABELW}px;flex-shrink:0;background:var(--bg-secondary)"></div>`;
+    gweeks.forEach(w=>{wRow+=`<div style="width:${GWCOL}px;flex-shrink:0;font-size:8px;text-align:center;background:var(--bg-secondary);border-left:1px solid var(--border-main);color:var(--text-secondary);padding:2px 0">${w.getDate()}/${w.getMonth()+1}</div>`;});
+    wRow+=`</div>`;
+    let tRows='';
+    projTasks.forEach(t=>{
+      const ts=new Date(t.assign),te=new Date(t.due);te.setHours(23,59,59);
+      const tL=gdpx(ts),tR=gdpx(te),tW=Math.max(4,tR-tL);
+      const tc=ganttColors.taskStatus[t.status]||'#374151';
+      const tidx=tasks.indexOf(t);
+      tRows+=`<div style="display:flex;border-bottom:1px solid var(--border-main);min-height:26px;align-items:center;cursor:pointer" onclick="showTaskDetail(${tidx})">
+        <div style="width:${GLABELW}px;flex-shrink:0;font-size:10px;padding:0 6px;background:var(--bg-secondary);border-right:1px solid var(--border-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.name}</div>
+        <div style="width:${gtw}px;position:relative;height:26px;flex-shrink:0;overflow:hidden">
+          <div style="position:absolute;top:0;bottom:0;left:${todPx}px;width:2px;background:#e24b4a;z-index:2"></div>
+          <div style="position:absolute;top:5px;height:16px;left:${tL}px;width:${tW}px;background:${tc};border-radius:3px;z-index:1;display:flex;align-items:center;padding:0 4px;overflow:hidden">
+            <span style="font-size:9px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.status}</span>
+          </div>
+        </div>
+      </div>`;
+    });
+    content.innerHTML=`<div style="overflow-x:auto"><div style="min-width:${GLABELW+gtw}px">${mRow+wRow+tRows}</div></div>`;
+  }
+}
+
+function openTaskFromDrawer(pidx){
+  const p=projects[pidx];
+  _taskReturnProject=p?.id||null;
+  editTaskIdx=-1;
+  document.getElementById('task-modal-title').textContent='Nueva tarea';
+  populateTaskProjectSelect();
+  resetTaskForm();
+  if(p){const sel=document.getElementById('t-project');if(sel)sel.value=p.id;}
+  document.getElementById('modal-new-task').classList.add('open');
+}
+// ─── GANTT ENGINE ─────────────────────────────────────────────────────────────
+let tlOffset=0; // months offset from today
+
+function tlGetRange(){
+  const now=new Date();
+  const start=new Date(now.getFullYear(),now.getMonth()+tlOffset,1);
+  const end=new Date(start.getFullYear(),start.getMonth()+3,0); // 3-month window
+  return{start,end};
+}
+
+function tlShift(n){tlOffset+=n;renderTimeline();}
+
+function tlWeeks(start,end){
+  const weeks=[];
+  let cur=new Date(start);
+  // align to Monday
+  const day=cur.getDay();
+  cur.setDate(cur.getDate()-(day===0?6:day-1));
+  while(cur<=end){
+    weeks.push(new Date(cur));
+    cur=new Date(cur);cur.setDate(cur.getDate()+7);
+  }
+  return weeks;
+}
+
+function tlDateToPx(d,start,totalDays,WCOL){
+  const ratio=Math.max(0,(d-start)/(totalDays*86400000));
+  return Math.round(ratio*(totalDays/7)*WCOL);
+}
+
+function tlBuildHeader(weeks,labelW){
+  // Month row
+  const months={};
+  weeks.forEach((w,i)=>{
+    const key=w.getFullYear()+'-'+w.getMonth();
+    if(!months[key])months[key]={label:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][w.getMonth()]+' '+w.getFullYear(),start:i,count:0};
+    months[key].count++;
+  });
+  const WCOL=52;
+  let monthRow=`<div style="display:flex;border-bottom:1px solid var(--border-main)">`;
+  monthRow+=`<div style="width:${labelW}px;flex-shrink:0;background:var(--bg-secondary)"></div>`;
+  Object.values(months).forEach(m=>{
+    monthRow+=`<div style="width:${m.count*WCOL}px;flex-shrink:0;font-size:11px;font-weight:700;padding:5px 8px;background:var(--bg-secondary);border-left:1px solid var(--border-main);color:var(--text-primary)">${m.label}</div>`;
+  });
+  monthRow+=`</div>`;
+
+  let weekRow=`<div style="display:flex;border-bottom:2px solid var(--border-main)">`;
+  weekRow+=`<div style="width:${labelW}px;flex-shrink:0;background:var(--bg-secondary);font-size:10px;font-weight:700;padding:4px 8px;color:var(--text-secondary)">PROYECTO / TAREA</div>`;
+  weeks.forEach(w=>{
+    const dd=w.getDate().toString().padStart(2,'0');
+    const mm=(w.getMonth()+1).toString().padStart(2,'0');
+    weekRow+=`<div style="width:${WCOL}px;flex-shrink:0;font-size:9px;font-weight:600;padding:4px 2px;text-align:center;background:var(--bg-secondary);border-left:1px solid var(--border-main);color:var(--text-secondary)">${dd}/${mm}</div>`;
+  });
+  weekRow+=`</div>`;
+  return{monthRow,weekRow,WCOL};
+}
+
+const ganttColors={
+  project:['#1a6fba','#0f766e','#854F0B','#5b21b6','#1a7a3c','#b91c1c','#0369a1'],
+  taskStatus:{Completada:'#166534','En proceso':'#b45309',Pendiente:'#374151',Bloqueada:'#b91c1c'}
+};
+
+function renderTimeline(){
+  const{start,end}=tlGetRange();
+  const weeks=tlWeeks(start,end);
+  const LABELW=200;
+  const{monthRow,weekRow,WCOL}=tlBuildHeader(weeks,LABELW);
+  const totalW=weeks.length*WCOL;
+  const totalDays=Math.ceil((end-start)/86400000)+1;
+
+  const months=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  document.getElementById('tl-range-label').textContent=
+    `${months[start.getMonth()]} ${start.getFullYear()} — ${months[end.getMonth()]} ${end.getFullYear()}`;
+
+  const leg=document.getElementById('tl-legend');leg.innerHTML='';
+  [['Completada','#166534'],['En proceso','#b45309'],['Pendiente','#374151'],['Bloqueada','#b91c1c']].forEach(([s,c])=>{
+    leg.innerHTML+=`<div style="display:flex;align-items:center;gap:4px;font-size:11px"><div style="width:12px;height:12px;border-radius:3px;background:${c};flex-shrink:0"></div>${s}</div>`;
+  });
+
+  function dpx(d){return Math.round(Math.max(0,Math.min(totalW,(d-start)/86400000/7*WCOL)));}
+  const tod=new Date();tod.setHours(0,0,0,0);
+  const todPx=dpx(tod);
+
+  let rows='';
+  projects.forEach((p,pi)=>{
+    if(!p.start&&!p.end)return;
+    const ps=new Date(p.start||p.end);
+    const pe=new Date(p.end||p.start);pe.setHours(23,59,59);
+    const color=ganttColors.project[pi%ganttColors.project.length];
+    const bL=dpx(ps),bR=dpx(pe),bW=Math.max(6,bR-bL);
+    const pidx=projects.indexOf(p);
+
+    rows+=`<div style="display:flex;border-bottom:1px solid var(--border-main);min-height:34px;align-items:center">`;
+    rows+=`<div style="width:${LABELW}px;flex-shrink:0;padding:0 8px;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;background:var(--bg-secondary);border-right:1px solid var(--border-main)" onclick="showProjectDetail(${pidx})" title="${p.name}">${p.id} ${p.name}</div>`;
+    rows+=`<div style="width:${totalW}px;flex-shrink:0;position:relative;height:34px;overflow:hidden">`;
+    weeks.forEach((_,wi)=>{rows+=`<div style="position:absolute;top:0;bottom:0;left:${wi*WCOL}px;width:1px;background:var(--border-main);opacity:.4"></div>`;});
+    rows+=`<div style="position:absolute;top:0;bottom:0;left:${todPx}px;width:2px;background:#e24b4a;z-index:2"></div>`;
+    rows+=`<div style="position:absolute;top:8px;height:18px;left:${bL}px;width:${bW}px;background:${color};border-radius:4px;padding:0 6px;cursor:pointer;z-index:1;display:flex;align-items:center;overflow:hidden" onclick="showProjectDetail(${pidx})">
+      <span style="font-size:10px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600">${p.name}</span></div>`;
+    rows+=`</div></div>`;
+
+    tasks.filter(t=>t.project===p.id&&t.assign&&t.due).forEach(t=>{
+      const ts=new Date(t.assign),te=new Date(t.due);te.setHours(23,59,59);
+      const tL=dpx(ts),tR=dpx(te),tW=Math.max(6,tR-tL);
+      const tc=ganttColors.taskStatus[t.status]||'#374151';
+      const tidx=tasks.indexOf(t);
+      rows+=`<div style="display:flex;border-bottom:1px solid var(--border-main);min-height:28px;align-items:center">`;
+      rows+=`<div style="width:${LABELW}px;flex-shrink:0;padding:0 8px 0 20px;font-size:11px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;background:var(--bg-primary);border-right:1px solid var(--border-main)" onclick="showTaskDetail(${tidx})" title="${t.name}">↳ ${t.name}</div>`;
+      rows+=`<div style="width:${totalW}px;flex-shrink:0;position:relative;height:28px;overflow:hidden">`;
+      weeks.forEach((_,wi)=>{rows+=`<div style="position:absolute;top:0;bottom:0;left:${wi*WCOL}px;width:1px;background:var(--border-main);opacity:.3"></div>`;});
+      rows+=`<div style="position:absolute;top:0;bottom:0;left:${todPx}px;width:2px;background:#e24b4a;z-index:2"></div>`;
+      rows+=`<div style="position:absolute;top:6px;height:16px;left:${tL}px;width:${tW}px;background:${tc};border-radius:3px;padding:0 5px;cursor:pointer;z-index:1;display:flex;align-items:center;overflow:hidden;opacity:.9" onclick="showTaskDetail(${tidx})">
+        <span style="font-size:9px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.name}</span></div>`;
+      rows+=`</div></div>`;
+    });
+  });
+
+  if(!rows)rows=`<div style="padding:24px;color:var(--text-secondary);font-size:13px;text-align:center">No hay proyectos con fechas definidas.</div>`;
+  document.getElementById('tl-gantt-wrap').innerHTML=monthRow+weekRow+rows;
+
+  const sel=document.getElementById('tl-project-select');
+  const prev=sel.value;
+  sel.innerHTML='<option value="">Seleccionar proyecto...</option>';
+  projects.forEach(p=>sel.innerHTML+=`<option value="${p.id}">${p.id} – ${p.name}</option>`);
+  if(prev)sel.value=prev;
+  if(sel.value)renderTaskGantt();
+}
+
+function renderTaskGantt(){
+  const pid=document.getElementById('tl-project-select').value;
+  const wrap=document.getElementById('tl-task-gantt');
+  if(!pid){wrap.innerHTML='<div style="padding:20px;color:var(--text-secondary);font-size:13px">Selecciona un proyecto para ver sus tareas.</div>';return;}
+  const projTasks=tasks.filter(t=>t.project===pid&&t.assign&&t.due);
+  if(!projTasks.length){wrap.innerHTML='<div style="padding:20px;color:var(--text-secondary);font-size:13px">Este proyecto no tiene tareas con fechas asignadas.</div>';return;}
+
+  const dates=projTasks.flatMap(t=>[new Date(t.assign),new Date(t.due)]);
+  let start=new Date(Math.min(...dates));let end=new Date(Math.max(...dates));
+  start=new Date(start.getFullYear(),start.getMonth()-1,1);
+  end=new Date(end.getFullYear(),end.getMonth()+2,0);
+  const weeks=tlWeeks(start,end);
+  const LABELW=220;
+  const{monthRow,weekRow,WCOL}=tlBuildHeader(weeks,LABELW);
+  const totalW=weeks.length*WCOL;
+
+  function dpx(d){return Math.round(Math.max(0,Math.min(totalW,(d-start)/86400000/7*WCOL)));}
+  const tod=new Date();tod.setHours(0,0,0,0);const todPx=dpx(tod);
+
+  let rows='';
+  projTasks.forEach(t=>{
+    const ts=new Date(t.assign),te=new Date(t.due);te.setHours(23,59,59);
+    const tL=dpx(ts),tR=dpx(te),tW=Math.max(6,tR-tL);
+    const tc=ganttColors.taskStatus[t.status]||'#374151';
+    const prio={Alta:'#b91c1c',Media:'#b45309',Baja:'#374151'}[t.priority]||'#374151';
+    const tidx=tasks.indexOf(t);
+    rows+=`<div style="display:flex;border-bottom:1px solid var(--border-main);min-height:36px;align-items:center">`;
+    rows+=`<div style="width:${LABELW}px;flex-shrink:0;padding:0 10px;background:var(--bg-secondary);border-right:1px solid var(--border-main);cursor:pointer" onclick="showTaskDetail(${tidx})">
+      <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.name}</div>
+      <div style="display:flex;gap:6px;margin-top:2px"><span style="font-size:10px;color:#fff;background:${tc};border-radius:3px;padding:1px 5px">${t.status}</span><span style="font-size:10px;color:${prio};font-weight:600">${t.priority}</span></div>
+    </div>`;
+    rows+=`<div style="width:${totalW}px;flex-shrink:0;position:relative;height:36px;overflow:hidden">`;
+    weeks.forEach((_,wi)=>{rows+=`<div style="position:absolute;top:0;bottom:0;left:${wi*WCOL}px;width:1px;background:var(--border-main);opacity:.35"></div>`;});
+    rows+=`<div style="position:absolute;top:0;bottom:0;left:${todPx}px;width:2px;background:#e24b4a;z-index:2"></div>`;
+    rows+=`<div style="position:absolute;top:9px;height:18px;left:${tL}px;width:${tW}px;background:${tc};border-radius:4px;padding:0 7px;cursor:pointer;z-index:1;display:flex;align-items:center;overflow:hidden" onclick="showTaskDetail(${tidx})">
+      <span style="font-size:10px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600">${t.name} · ${t.owner||''}</span></div>`;
+    rows+=`</div></div>`;
+  });
+  wrap.innerHTML=monthRow+weekRow+rows;
+}
+
+// Legacy alias for old onchange references
+function renderTaskTimeline(){renderTaskGantt();}
+function renderTasks(){
+  const pf=document.getElementById('task-proj-filter')?.value||'';
+  const sf=document.getElementById('task-status-filter')?.value||'';
+  const mf=document.getElementById('task-mine-filter')?.value||'';
+  const qf=(document.getElementById('task-search')?.value||'').toLowerCase();
+  const canEdit=currentUser&&(currentUser.role==='admin'||currentUser.role==='editor');
+
+  // Populate project select only on first render
+  const psel=document.getElementById('task-proj-filter');
+  if(psel&&psel.options.length<=1){
+    projects.forEach(p=>psel.innerHTML+=`<option value="${p.id}">${p.id} – ${p.name}</option>`);
+  }
+
+  const tb=document.getElementById('tasks-tbody');tb.innerHTML='';
+  const today2=new Date();today2.setHours(0,0,0,0);
+
+  tasks.filter(t=>{
+    if(pf&&t.project!==pf)return false;
+    if(sf&&t.status!==sf)return false;
+    if(mf==='mine'&&t.owner!==currentUser?.name)return false;
+    if(qf&&!t.name.toLowerCase().includes(qf)&&!(t.owner||'').toLowerCase().includes(qf))return false;
+    return true;
+  }).forEach(t=>{
+    const tidx=tasks.indexOf(t);
+    const due=t.due?new Date(t.due):null;
+    const overdue=due&&due<today2&&t.status!=='Completada';
+    tb.innerHTML+=`<tr style="cursor:pointer" onclick="showTaskDetail(${tidx})">
+      <td style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.name}</td>
+      <td><span class="badge b-gray" style="font-size:10px">${t.project}</span></td>
+      <td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);font-size:12px">${t.obj||'—'}</td>
+      <td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.owner||'—'}</td>
+      <td style="font-size:12px">${t.assign||'—'}</td>
+      <td style="font-size:12px;color:${overdue?'#b91c1c':'var(--text-primary)'};font-weight:${overdue?'700':'400'}">${t.due||'—'}${overdue?' ⚠':''}</td>
+      <td><span class="badge ${taskColors[t.status]||'b-gray'}">${t.status}</span></td>
+      <td onclick="event.stopPropagation()" style="white-space:nowrap;display:flex;gap:4px;flex-wrap:wrap">
+        ${canEdit?`<button class="btn btn-sm" onclick="editTask(${tidx})">Editar</button>`:''}
+        ${canEdit&&currentUser.role==='admin'?`<button class="btn btn-sm btn-danger" onclick="deleteTask(${tidx})">Elim.</button>`:''}
+        ${t.ownerEmail?`<button class="btn btn-sm notify-btn" onclick="notifyTask(${tidx})">Notif.</button>`:''}
+      </td>
+    </tr>`;
+  });
+  if(!tb.innerHTML)tb.innerHTML=`<tr><td colspan="8" style="text-align:center;color:var(--text-secondary);padding:20px">No hay tareas que coincidan.</td></tr>`;
+}
+async function deleteTask(idx){
+  if(!confirm('¿Eliminar tarea "'+tasks[idx].name+'"?'))return;
+  tasks.splice(idx,1);await persist();renderTasks();renderDashboard();showToast('Tarea eliminada');
+}
+function editTask(idx, returnProjectId=null){
+  editTaskIdx=idx;const t=tasks[idx];
+  _taskReturnProject=returnProjectId||t.project||null;
+  document.getElementById('task-modal-title').textContent='Editar tarea';
+  populateTaskProjectSelect();
+  document.getElementById('t-name').value=t.name;
+  document.getElementById('t-obj').value=t.obj||'';
+  document.getElementById('t-project').value=t.project;
+  document.getElementById('t-assign').value=t.assign||'';
+  document.getElementById('t-due').value=t.due||'';
+  document.getElementById('t-status').value=t.status;
+  document.getElementById('t-prio').value=t.priority||'Media';
+  document.getElementById('t-notes').value=t.notes||'';
+  // Load owners
+  const ownersArr=t.owners&&t.owners.length?t.owners:[{name:t.owner||'',email:t.ownerEmail||'',role:'principal'}];
+  const cnt=document.getElementById('t-owner-count');
+  if(cnt)cnt.value=Math.min(6,ownersArr.length);
+  updateOwnerFields();
+  setTimeout(()=>{
+    ownersArr.forEach((o,i)=>{
+      const ni=document.getElementById('t-owner-'+i);const ei=document.getElementById('t-email-'+i);
+      if(ni)ni.value=o.name||'';if(ei)ei.value=o.email||'';
+    });
+  },50);
+  document.getElementById('modal-new-task').classList.add('open');
+}
+let editMemberIdx=-1;
+function renderTeam(){
+  const members=users.filter(u=>u.active);
+  const tg=document.getElementById('team-grid');tg.innerHTML='';
+  const canEdit=currentUser&&currentUser.role==='admin';
+  const addBtn=document.getElementById('team-add-btn');
+  if(addBtn)addBtn.style.display=canEdit?'inline-block':'none';
+  if(!members.length){
+    tg.innerHTML='<div style="grid-column:span 3;padding:20px;color:var(--text-secondary);font-size:13px">No hay miembros activos. Crea usuarios en Gestión de usuarios.</div>';
+  } else {
+    members.forEach(u=>{
+      const uidx=users.indexOf(u);
+      const init=u.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+      const roleLbl={admin:'Administrador',editor:'Editor',viewer:'Visualizador'}[u.role]||u.role;
+      tg.innerHTML+=`<div class="card">
+        <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:10px">
+          <div style="width:44px;height:44px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#1e40af;flex-shrink:0;border:2px solid #bfdbfe">${init}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:14px">${u.name}</div>
+            <div style="font-size:12px;color:var(--text-secondary)">${roleLbl}</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);padding-top:8px;border-top:1px solid var(--border-main)">
+          <div><strong>Depto:</strong> ${u.dept||'—'}</div>
+          <div style="margin-top:3px;color:var(--accent)">${u.email}</div>
+        </div>
+        ${canEdit?`<div style="display:flex;gap:6px;margin-top:10px;padding-top:8px;border-top:1px solid var(--border-main)">
+          <button class="btn btn-sm" style="flex:1" onclick="openEditMember(${uidx})">Editar</button>
+          <button class="btn btn-sm btn-danger" style="flex:1" onclick="deleteMember(${uidx})">Desactivar</button>
+        </div>`:''}
+      </div>`;
+    });
+  }
+  const wb=document.getElementById('workload-tbody');wb.innerHTML='';
+  members.forEach(u=>{
+    const active=tasks.filter(t=>t.owner===u.name&&t.status!=='Completada').length;
+    const projs=[...new Set(tasks.filter(t=>t.owner===u.name).map(t=>t.project))].length;
+    const pct=Math.min(100,active*20);
+    wb.innerHTML+=`<tr><td style="font-weight:600">${u.name}</td><td>${u.dept||'—'}</td><td><span style="font-weight:700;color:${active>2?'#b91c1c':active>0?'#b45309':'#1a7a3c'}">${active}</span></td><td>${projs}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-bar" style="flex:1;height:10px"><div class="progress-fill" style="width:${pct}%;background:${pct>60?'#b91c1c':pct>30?'#b45309':'#1a7a3c'}"></div></div><span style="font-size:12px;font-weight:600;min-width:32px">${pct}%</span></div></td></tr>`;
+  });
+}
+function openEditMember(userIdx){
+  editMemberIdx=userIdx;
+  const u=users[userIdx];
+  document.getElementById('em-name').value=u.name;
+  document.getElementById('em-email').value=u.email;
+  document.getElementById('em-role').value={admin:'Administrador',editor:'Editor',viewer:'Visualizador'}[u.role]||u.role;
+  document.getElementById('em-dept').value=u.dept||'';
+  document.getElementById('modal-edit-member').classList.add('open');
+}
+async function saveEditMember(){
+  if(editMemberIdx<0)return;
+  const name=document.getElementById('em-name').value.trim();
+  const email=document.getElementById('em-email').value.trim().toLowerCase();
+  const dept=document.getElementById('em-dept').value.trim();
+  if(!name){showToast('El nombre es obligatorio','error');return;}
+  if(!email){showToast('El correo es obligatorio','error');return;}
+  const exists=users.find((u,i)=>u.email.toLowerCase()===email&&i!==editMemberIdx);
+  if(exists){showToast('Ese correo ya está en uso','error');return;}
+  const oldName=users[editMemberIdx].name;
+  tasks.forEach(t=>{if(t.owner===oldName){t.owner=name;t.ownerEmail=email;}});
+  users[editMemberIdx].name=name;
+  users[editMemberIdx].email=email;
+  users[editMemberIdx].dept=dept;
+  history.unshift({date:today(),project:'—',user:currentUser?.name||'Admin',action:`Miembro editado: ${oldName} → ${name}`});
+  await persist();
+  closeModal('edit-member');renderTeam();showToast('Miembro actualizado','success');
+}
+async function deleteMember(userIdx){
+  if(!confirm('¿Desactivar a '+users[userIdx].name+'?\nEl usuario quedará inactivo y no podrá iniciar sesión.'))return;
+  const name=users[userIdx].name;
+  users[userIdx].active=false;
+  history.unshift({date:today(),project:'—',user:currentUser?.name||'Admin',action:`Miembro desactivado: ${name}`});
+  await persist();renderTeam();renderUsers();
+  showToast(name+' desactivado del equipo');
+}
+function renderUsers(){
+  const tb=document.getElementById('users-tbody');tb.innerHTML='';
+  const roleLabels={admin:'Administrador',editor:'Editor',viewer:'Visualizador'};
+  const roleCls={admin:'role-admin',editor:'role-editor',viewer:'role-viewer'};
+  users.forEach((u,i)=>{
+    tb.innerHTML+=`<tr><td style="font-weight:600">${u.name}</td><td style="color:var(--accent)">${u.email}</td><td><span class="user-role-badge ${roleCls[u.role]||'role-viewer'}">${roleLabels[u.role]||u.role}</span></td><td>${u.dept||'—'}</td><td><span class="badge ${u.active?'b-green':'b-red'}">${u.active?'Activo':'Inactivo'}</span></td><td style="white-space:nowrap;display:flex;gap:4px;flex-wrap:wrap"><button class="btn btn-sm" onclick="editUser(${i})">Editar</button><button class="btn btn-sm" style="background:#0f766e;color:#fff;border-color:#0f766e" onclick="openResetPass(${i})">Restablecer clave</button><button class="btn btn-sm btn-danger" onclick="deleteUser(${i})">Eliminar</button></td></tr>`;
+  });
+}
+function renderHistory(){
+  const pf=document.getElementById('hist-proj-filter')?.value||'';
+  const hf=document.getElementById('hist-proj-filter');
+  if(hf&&hf.options.length===1){projects.forEach(p=>hf.innerHTML+=`<option value="${p.id}">${p.id} – ${p.name}</option>`);}
+  const hl=document.getElementById('history-list');hl.innerHTML='';
+  history.filter(h=>!pf||h.project===pf).forEach(h=>{
+    hl.innerHTML+=`<div class="history-item"><div class="history-dot"></div><div class="history-content"><div style="font-size:13px;font-weight:500">${h.action}</div><div class="history-time">${h.date} · <span class="badge b-gray">${h.project}</span> · <strong>${h.user}</strong></div></div></div>`;
+  });
+  if(!history.filter(h=>!pf||h.project===pf).length)hl.innerHTML='<div style="padding:16px;color:var(--text-secondary);font-size:13px">Sin registros de historial.</div>';
+}
+// ─── TASK DETAIL MODAL ───────────────────────────────────────────────────────
+function showTaskDetail(tidx){
+  const t=tasks[tidx];
+  const proj=projects.find(p=>p.id===t.project);
+  const projIdx=projects.findIndex(p=>p.id===t.project);
+  const tc=ganttColors.taskStatus[t.status]||'#374151';
+  const prio={Alta:'#b91c1c',Media:'#b45309',Baja:'#166534'}[t.priority]||'#374151';
+  const canEdit=currentUser&&(currentUser.role==='admin'||currentUser.role==='editor');
+  const th=t.taskHistory||[];
+  const allOwners=(t.owners&&t.owners.length)?t.owners:[{name:t.owner,email:t.ownerEmail}].filter(o=>o.name);
+  const hasEmail=allOwners.some(o=>o.email);
+
+  // History HTML
+  const histHTML=th.length?`
+    <div style="margin-bottom:14px">
+      <div style="font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Historial de cambios</div>
+      <div style="max-height:140px;overflow-y:auto;border:1px solid var(--border-main);border-radius:var(--radius-md)">
+        ${th.map((h,i)=>`<div style="display:flex;gap:10px;padding:8px 10px;${i<th.length-1?'border-bottom:1px solid var(--border-main)':''}">
+          <div style="width:7px;height:7px;border-radius:50%;background:var(--accent);margin-top:5px;flex-shrink:0"></div>
+          <div><div style="font-size:12px">${h.changes}</div><div style="font-size:10px;color:var(--text-secondary);margin-top:2px">${h.date} · <strong>${h.user}</strong></div></div>
+        </div>`).join('')}
+      </div>
+    </div>`
+  :`<div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;font-style:italic">Sin cambios registrados.</div>`;
+
+  document.getElementById('td-title').textContent=t.name;
+  document.getElementById('td-content').innerHTML=`
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <span style="background:${tc};color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600">${t.status}</span>
+      <span style="background:${prio};color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600">Prioridad: ${t.priority}</span>
+      <span class="badge b-blue">${t.project}${proj?' – '+proj.name.substring(0,20):''}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div style="background:var(--bg-secondary);padding:10px;border-radius:var(--radius-md)">
+        <div style="font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px">Objetivo</div>
+        <div style="font-size:13px">${t.obj||'—'}</div>
+      </div>
+      <div style="background:var(--bg-secondary);padding:10px;border-radius:var(--radius-md)">
+        <div style="font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px">Fechas</div>
+        <div style="font-size:12px">Asignación: <strong>${t.assign||'—'}</strong></div>
+        <div style="font-size:12px;margin-top:3px">Entrega: <strong style="color:${t.status!=='Completada'&&t.due&&new Date(t.due)<new Date()?'#b91c1c':'var(--text-primary)'}">${t.due||'—'}</strong></div>
+      </div>
+      <div style="background:var(--bg-secondary);padding:10px;border-radius:var(--radius-md);grid-column:span 2">
+        <div style="font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px">Co-responsables (${allOwners.length})</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          ${allOwners.filter(o=>o.name).map(o=>`
+            <div style="display:flex;align-items:center;gap:7px;background:var(--bg-primary);padding:6px 10px;border-radius:var(--radius-md);border:1px solid var(--border-main)">
+              <div style="width:24px;height:24px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#1e40af;flex-shrink:0">${(o.name||'?')[0].toUpperCase()}</div>
+              <div>
+                <div style="font-size:12px;font-weight:600">${o.name}</div>
+                ${o.email?`<div style="font-size:10px;color:var(--accent)">${o.email}</div>`:'<div style="font-size:10px;color:var(--text-secondary)">Sin email</div>'}
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+    ${t.notes?`<div style="background:var(--bg-secondary);padding:10px;border-radius:var(--radius-md);margin-bottom:14px">
+      <div style="font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px">Notas</div>
+      <div style="font-size:13px;line-height:1.6">${t.notes}</div>
+    </div>`:''}
+    ${histHTML}
+    <div style="display:flex;justify-content:flex-end;gap:8px;border-top:1.5px solid var(--border-main);padding-top:14px;margin-top:4px;flex-wrap:wrap">
+      <button class="btn" onclick="closeModal('task-detail')">Cerrar</button>
+      ${hasEmail?`<button class="btn notify-btn" onclick="closeModal('task-detail');notifyTask(${tidx})">Notificar a todos (${allOwners.filter(o=>o.email).length})</button>`:''}
+      ${projIdx>=0?`<button class="btn" style="background:var(--bg-secondary)" onclick="closeModal('task-detail');showProjectDetail(${projIdx})">← Ver proyecto</button>`:''}
+      ${canEdit?`<button class="btn btn-primary" onclick="closeModal('task-detail');editTask(${tidx},'${t.project}')">Editar tarea</button>`:''}
+    </div>`;
+  document.getElementById('modal-task-detail').classList.add('open');
+}
+
+function showProjectDetail(idx){
+  const p=projects[idx];
+  const mt=tasks.filter(t=>t.project===p.id);
+  const dn=mt.filter(t=>t.status==='Completada').length;
+  const pct=mt.length>0?Math.round(dn/mt.length*100):0;
+  const pl=priorityLabel(p.priority);
+  const db=p.deps.map(d=>{const dp=projects.find(x=>x.id===d);return`<span class="badge b-blue">${d}${dp?' – '+dp.name.substring(0,16):''}</span>`;}).join(' ')||'Ninguna';
+  document.getElementById('detail-title').textContent=`${p.id} — ${p.name}`;
+  const canEdit=currentUser&&(currentUser.role==='admin'||currentUser.role==='editor');
+
+  // Build task Gantt for this project
+  let ganttHTML='';
+  const projTasks=mt.filter(t=>t.assign&&t.due);
+  if(projTasks.length){
+    const dates=projTasks.flatMap(t=>[new Date(t.assign),new Date(t.due)]);
+    let gStart=new Date(Math.min(...dates));
+    let gEnd=new Date(Math.max(...dates));
+    gStart=new Date(gStart.getFullYear(),gStart.getMonth(),1);
+    gEnd=new Date(gEnd.getFullYear(),gEnd.getMonth()+1,0);
+    const gDays=Math.ceil((gEnd-gStart)/86400000)+1;
+    const gWeeks=tlWeeks(gStart,gEnd);
+    const GLABELW=160;const GWCOL=44;
+    const today2=new Date();today2.setHours(0,0,0,0);
+    const todayPct=Math.max(0,Math.min(1,(today2-gStart)/(gDays*86400000)))*100;
+
+    // Month header
+    const gMonths={};
+    gWeeks.forEach((w,i)=>{const key=w.getFullYear()+'-'+w.getMonth();if(!gMonths[key])gMonths[key]={label:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][w.getMonth()]+' '+w.getFullYear(),count:0};gMonths[key].count++;});
+    const gTotalW=gWeeks.length*GWCOL;
+    function gdpx(d){return Math.round(Math.max(0,Math.min(gTotalW,(d-gStart)/86400000/7*GWCOL)));}
+    const gTodayPx=gdpx(new Date());
+
+    let mRow=`<div style="display:flex;border-bottom:1px solid var(--border-main)"><div style="width:${GLABELW}px;flex-shrink:0;background:var(--bg-secondary)"></div>`;
+    Object.values(gMonths).forEach(m=>{mRow+=`<div style="width:${m.count*GWCOL}px;flex-shrink:0;font-size:10px;font-weight:700;padding:4px 6px;background:var(--bg-secondary);border-left:1px solid var(--border-main)">${m.label}</div>`;});
+    mRow+=`</div>`;
+
+    let wRow=`<div style="display:flex;border-bottom:2px solid var(--border-main)"><div style="width:${GLABELW}px;flex-shrink:0;background:var(--bg-secondary);font-size:9px;font-weight:700;padding:3px 6px;color:var(--text-secondary)">TAREA</div>`;
+    gWeeks.forEach(w=>{wRow+=`<div style="width:${GWCOL}px;flex-shrink:0;font-size:8px;padding:3px 2px;text-align:center;background:var(--bg-secondary);border-left:1px solid var(--border-main);color:var(--text-secondary)">${w.getDate()}/${w.getMonth()+1}</div>`;});
+    wRow+=`</div>`;
+
+    let tRows='';
+    projTasks.forEach(t=>{
+      const ts=new Date(t.assign),te=new Date(t.due);te.setHours(23,59,59);
+      const tL=gdpx(ts),tR=gdpx(te),tW=Math.max(6,tR-tL);
+      const tc=ganttColors.taskStatus[t.status]||'#374151';
+      const tidx=tasks.indexOf(t);
+      tRows+=`<div style="display:flex;border-bottom:1px solid var(--border-main);min-height:30px;align-items:center;cursor:pointer" onclick="closeModal('project-detail');showTaskDetail(${tidx})">`;
+      tRows+=`<div style="width:${GLABELW}px;flex-shrink:0;padding:0 8px;font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--bg-secondary);border-right:1px solid var(--border-main)" title="${t.name}">${t.name}</div>`;
+      tRows+=`<div style="width:${gTotalW}px;flex-shrink:0;position:relative;height:30px;overflow:hidden">`;
+      gWeeks.forEach((_,wi)=>{tRows+=`<div style="position:absolute;top:0;bottom:0;left:${wi*GWCOL}px;width:1px;background:var(--border-main);opacity:.3"></div>`;});
+      tRows+=`<div style="position:absolute;top:0;bottom:0;left:${gTodayPx}px;width:2px;background:#e24b4a;z-index:2"></div>`;
+      tRows+=`<div style="position:absolute;top:7px;height:16px;left:${tL}px;width:${tW}px;background:${tc};border-radius:3px;z-index:1;display:flex;align-items:center;padding:0 5px;overflow:hidden"><span style="font-size:9px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.status}</span></div>`;
+      tRows+=`</div></div>`;
+    });
+    ganttHTML=`<div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 8px">Cronograma de tareas <span style="font-weight:400;font-size:10px">(clic en tarea para ver detalle)</span></div>
+    <div style="border:1.5px solid var(--border-main);border-radius:var(--radius-md);overflow:hidden;overflow-x:auto">${mRow+wRow+tRows}</div>`;
+  }
+
+  document.getElementById('detail-content').innerHTML=`
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <span class="badge ${statusColors[p.status]||'b-gray'}">${p.status}</span>
+      <span class="badge ${pl.cls}">Prioridad: ${p.priority} (${pl.text})</span>
+      <span class="badge b-blue">Impacto: ${p.impTotal}</span>
+      <span class="badge b-amber">Esfuerzo: ${p.effTotal}</span>
+    </div>
+    <div class="grid2" style="margin-bottom:14px">
+      <div><div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Objetivo</div><div>${p.obj||'—'}</div></div>
+      <div><div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Líder</div><div style="font-weight:600">${p.leader||'—'}</div></div>
+      <div><div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Período</div><div>${p.start||'—'} → ${p.end||'—'}</div></div>
+      <div><div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Presupuesto</div><div style="font-weight:600;color:var(--accent)">${p.budget||'—'}</div></div>
+    </div>
+    <div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Avance de tareas — ${pct}%</div><div class="progress-bar" style="height:12px"><div class="progress-fill" style="width:${pct}%"></div></div><div style="font-size:12px;margin-top:4px;color:var(--text-secondary)">${dn}/${mt.length} tareas completadas</div></div>
+    <div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Dependencias</div>${db}</div>
+    ${ganttHTML}
+    <div class="grid2" style="margin-bottom:14px;margin-top:14px">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Evaluación de impacto</div>
+        ${['Ingresos','Costos','Exp. cliente','Marca'].map((l,i)=>`<div class="score-row" style="margin-bottom:5px"><div class="score-label" style="width:110px;font-size:11px">${l}</div>${[1,2,3,4,5].map(v=>`<div class="star${p.impact[i]>=v?' on':''}" style="cursor:default;width:16px;height:16px;font-size:10px">${v}</div>`).join('')}<div class="score-val" style="font-size:12px">${p.impact[i]}</div></div>`).join('')}
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Evaluación de esfuerzo</div>
+        ${['Comp. técnica','Recursos','Tiempo','G. cambio'].map((l,i)=>`<div class="score-row" style="margin-bottom:5px"><div class="score-label" style="width:110px;font-size:11px">${l}</div>${[1,2,3,4,5].map(v=>`<div class="star${p.effort[i]>=v?' on':''}" style="cursor:default;width:16px;height:16px;font-size:10px">${v}</div>`).join('')}<div class="score-val" style="font-size:12px">${p.effort[i]}</div></div>`).join('')}
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px;border-top:1.5px solid var(--border-main);padding-top:14px">
+      <button class="btn" onclick="closeModal('project-detail')">Cerrar</button>
+      ${canEdit?`<button class="btn btn-primary" onclick="closeModal('project-detail');editProject(${idx})">Editar proyecto</button>`:''}
+    </div>`;
+  document.getElementById('modal-project-detail').classList.add('open');
+}
+
+// ─── BACKUP / RESTORE ────────────────────────────────────────────────────────
+function exportBackup(){
+  const data={users,projects,tasks,history,exported:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='EC_Project_backup_'+today()+'.json';
+  a.click();
+  showToast('Backup exportado','success');
+}
+async function importBackup(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!data.projects||!data.tasks||!data.users){showToast('Archivo inválido','error');return;}
+      if(!confirm('¿Restaurar backup? Esto reemplazará todos los datos actuales.'))return;
+      users=data.users;projects=data.projects;tasks=data.tasks;
+      history=data.history||history;
+      await persist();
+      showToast('Backup restaurado correctamente','success');
+      renderDashboard();
+    }catch(err){showToast('Error al leer el archivo','error');}
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+// ─── RESET PASSWORD ──────────────────────────────────────────────────────────
+let resetPassIdx=-1;
+function openResetPass(idx){
+  resetPassIdx=idx;
+  const u=users[idx];
+  document.getElementById('reset-pass-user-info').innerHTML=`<strong>${u.name}</strong><br><span style="color:var(--text-secondary)">${u.email} · ${u.dept||'Sin departamento'}</span>`;
+  document.getElementById('rp-pass').value='';
+  document.getElementById('rp-pass2').value='';
+  document.getElementById('modal-reset-pass').classList.add('open');
+}
+async function doResetPass(){
+  const p1=document.getElementById('rp-pass').value;
+  const p2=document.getElementById('rp-pass2').value;
+  if(p1.length<6){showToast('La contraseña debe tener al menos 6 caracteres','error');return;}
+  if(p1!==p2){showToast('Las contraseñas no coinciden','error');return;}
+  users[resetPassIdx].pass=await sha256(p1);
+  history.unshift({date:today(),project:'—',user:currentUser?.name||'Admin',action:`Contraseña restablecida para: ${users[resetPassIdx].name}`});
+  await persist();
+  closeModal('reset-pass');
+  showToast('Contraseña restablecida correctamente','success');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+emailjs.init('syuUThzDFnt26rQZf');
+setTimeout(updateOwnerFields,100);
+
+// Functions are global (no module wrapper)
+
+loadFromFirebase();
+</script>
+</body>
+</html>
