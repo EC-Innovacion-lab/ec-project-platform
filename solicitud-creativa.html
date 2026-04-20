@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solicitud Creativa — EC Group</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f4fa;--surface:#fff;--navy:#0e1628;
+  --accent:#2563eb;--accent-soft:#eff6ff;--accent-border:#bfdbfe;
+  --green:#16a34a;--green-soft:#f0fdf4;
+  --amber:#d97706;--amber-soft:#fffbeb;
+  --red:#dc2626;--red-soft:#fef2f2;
+  --text:#0f172a;--text2:#475569;--text3:#94a3b8;
+  --border:#e2e8f0;
+  --r:12px;--r-sm:8px;
+  --shadow-md:0 4px 16px rgba(0,0,0,.08);
+}
+body{font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:var(--bg);min-height:100vh}
+
+/* ── TOP BAR ─── */
+.topbar{background:var(--navy);padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-logo{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.topbar-logo span{color:#60a5fa}
+.topbar-tag{font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em}
+
+/* ── HERO ─── */
+.hero{background:linear-gradient(135deg,var(--navy) 0%,#1e3a6e 100%);padding:36px 24px 32px;text-align:center;color:#fff;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-40px;right:-60px;width:220px;height:220px;border-radius:50%;background:rgba(96,165,250,.07)}
+.hero::after{content:'';position:absolute;bottom:-60px;left:-40px;width:180px;height:180px;border-radius:50%;background:rgba(96,165,250,.05)}
+.hero-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(96,165,250,.15);border:1px solid rgba(96,165,250,.3);border-radius:20px;padding:4px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#93c5fd;margin-bottom:14px}
+.hero h1{font-size:28px;font-weight:700;letter-spacing:-.5px;margin-bottom:8px;line-height:1.25}
+.hero p{font-size:14px;color:rgba(255,255,255,.6);max-width:440px;margin:0 auto;line-height:1.6}
+
+/* ── CONTAINER ─── */
+.container{max-width:700px;margin:0 auto;padding:20px 16px 80px;}
+
+/* ── CARD ─── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-md);overflow:hidden;margin-bottom:14px}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.card-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.card-title{font-size:14px;font-weight:700;letter-spacing:-.2px}
+.card-desc{font-size:11px;color:var(--text3);margin-top:2px}
+.card-body{padding:20px}
+.step-bar{display:flex;align-items:center;gap:10px;padding:12px 20px;background:var(--bg);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.step-dot{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-label{font-size:12px;font-weight:600;color:var(--text2)}
+
+/* ── TYPE SELECTOR ─── */
+.type-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.type-btn{padding:16px 14px;border:2px solid var(--border);border-radius:var(--r-sm);background:var(--bg);cursor:pointer;text-align:left;font-family:'DM Sans',sans-serif;transition:all .15s;position:relative}
+.type-btn:hover{border-color:var(--accent);background:var(--accent-soft)}
+.type-btn.selected{border-color:var(--accent);background:var(--accent-soft)}
+.type-btn.selected::after{content:'✓';position:absolute;top:10px;right:12px;font-size:13px;font-weight:700;color:var(--accent)}
+.tb-icon{font-size:22px;margin-bottom:8px;display:block}
+.tb-name{font-size:13px;font-weight:700;color:var(--text);display:block}
+.tb-desc{font-size:11px;color:var(--text3);margin-top:3px;display:block;line-height:1.4}
+
+/* ── PREDEF TYPE GRID ─── */
+.predef-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.predef-card{padding:14px 12px;border:2px solid var(--border);border-radius:var(--r-sm);background:var(--bg);cursor:pointer;text-align:center;font-family:'DM Sans',sans-serif;transition:all .15s}
+.predef-card:hover{border-color:var(--accent);background:var(--accent-soft)}
+.predef-card.selected{border-color:var(--accent);background:var(--accent);color:#fff}
+.predef-card.selected .pc-icon,.predef-card.selected .pc-name,.predef-card.selected .pc-desc{color:#fff!important}
+.pc-icon{font-size:24px;display:block;margin-bottom:6px}
+.pc-name{font-size:12px;font-weight:700;color:var(--text);display:block}
+.pc-desc{font-size:10px;color:var(--text3);display:block;margin-top:2px;line-height:1.3}
+
+/* ── DYNAMIC FIELDS PANEL ─── */
+.dyn-fields{display:none;background:linear-gradient(135deg,var(--accent-soft),#f0f9ff);border:2px solid var(--accent-border);border-radius:var(--r-sm);padding:18px;margin-top:16px;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── COMPANY ─── */
+.company-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.company-btn{padding:12px 8px;border:2px solid var(--border);border-radius:var(--r-sm);background:var(--bg);cursor:pointer;text-align:center;font-family:'DM Sans',sans-serif;transition:all .15s}
+.company-btn:hover{border-color:var(--accent);background:var(--accent-soft)}
+.company-btn.selected{border-color:var(--accent);background:var(--accent)}
+.company-btn.selected .cb-name{color:#fff}
+.company-btn.selected .cb-dot{background:rgba(255,255,255,.5)!important}
+.cb-dot{width:9px;height:9px;border-radius:50%;margin:0 auto 5px}
+.cb-name{font-size:11px;font-weight:700;color:var(--text)}
+
+/* ── PRIORITY ─── */
+.prio-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.prio-btn{padding:12px 8px;border:2px solid var(--border);border-radius:var(--r-sm);background:var(--bg);cursor:pointer;text-align:center;font-family:'DM Sans',sans-serif;transition:all .15s}
+.prio-btn.sel-alta{border-color:var(--red)!important;background:var(--red-soft)!important}
+.prio-btn.sel-media{border-color:var(--amber)!important;background:var(--amber-soft)!important}
+.prio-btn.sel-baja{border-color:var(--green)!important;background:var(--green-soft)!important}
+.pb-icon{font-size:18px;display:block;margin-bottom:4px}
+.pb-name{font-size:12px;font-weight:700;display:block}
+.pb-days{font-size:10px;color:var(--text3);display:block;margin-top:2px}
+
+/* ── FORM ─── */
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.fg:last-child{margin-bottom:0}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.fr:last-child{margin-bottom:0}
+.fr-3{grid-template-columns:1fr 1fr 1fr}
+label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em}
+.req{color:var(--red)}
+input,select,textarea{padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);background:var(--bg);font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;width:100%;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+input.err,select.err,textarea.err{border-color:var(--red);background:var(--red-soft)}
+textarea{resize:vertical;min-height:90px;line-height:1.6}
+.hint{font-size:11px;color:var(--text3);margin-top:3px}
+.err-msg{font-size:11px;color:var(--red);margin-top:3px;display:none}
+.section-label{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--accent-border)}
+.section-label:first-child{margin-top:0}
+
+/* ── SUBMIT ─── */
+.submit-wrap{padding:0 20px 20px}
+.submit-btn{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-sm);font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s,transform .1s;display:flex;align-items:center;justify-content:center;gap:8px}
+.submit-btn:hover{background:#1d4ed8}
+.submit-btn:active{transform:scale(.99)}
+.submit-btn:disabled{background:var(--text3);cursor:not-allowed;transform:none}
+.err-banner{display:none;background:var(--red-soft);border:1px solid #fca5a5;border-radius:var(--r-sm);padding:12px 16px;font-size:13px;color:var(--red);margin:0 20px 12px}
+
+/* ── SUCCESS ─── */
+.success-wrap{display:none;padding:52px 24px;text-align:center}
+.s-circle{width:72px;height:72px;border-radius:50%;background:var(--green-soft);border:3px solid #86efac;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:32px}
+.s-h{font-size:24px;font-weight:700;letter-spacing:-.4px;margin-bottom:8px}
+.s-p{font-size:14px;color:var(--text2);line-height:1.7;max-width:400px;margin:0 auto 16px}
+.s-id{display:inline-block;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border);border-radius:20px;padding:6px 16px;font-size:14px;font-weight:700;margin-bottom:20px}
+.s-summary{background:var(--bg);border-radius:var(--r-sm);padding:14px;text-align:left;margin:0 auto 24px;max-width:440px;border:1px solid var(--border)}
+.reset-btn{padding:11px 26px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-sm);font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s}
+.reset-btn:hover{background:#1d4ed8}
+
+footer{text-align:center;padding:24px;font-size:12px;color:var(--text3)}
+footer a{color:var(--accent);text-decoration:none}
+
+@media(max-width:520px){
+  .hero h1{font-size:22px}
+  .type-grid,.predef-grid,.company-grid,.prio-grid{grid-template-columns:1fr}
+  .fr,.fr-3{grid-template-columns:1fr}
+  .card-body{padding:14px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">EC_<span>Group</span></div>
+  <div class="topbar-tag">Área Creativa</div>
+</div>
+
+<div class="hero">
+  <div class="hero-badge">✦ Área Creativa</div>
+  <h1>Solicitud de contenido</h1>
+  <p>Cuéntanos qué necesitas y el equipo creativo se encargará. Sin cuentas, sin contraseñas.</p>
+</div>
+
+<div class="container">
+<div id="form-screen">
+
+  <!-- PASO 1 -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:#eff6ff">📋</div>
+      <div>
+        <div class="card-title">¿Qué tipo de solicitud es?</div>
+        <div class="card-desc">Las predefinidas se procesan más rápido — solo completas los datos básicos</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="type-grid">
+        <button class="type-btn" onclick="pickType('pre',this)" type="button">
+          <span class="tb-icon">⚡</span>
+          <span class="tb-name">Solicitud predefinida</span>
+          <span class="tb-desc">Tipo de solicitud ya existente. Rápido y directo.</span>
+        </button>
+        <button class="type-btn" onclick="pickType('new',this)" type="button">
+          <span class="tb-icon">✏️</span>
+          <span class="tb-name">Solicitud nueva</span>
+          <span class="tb-desc">Describe desde cero lo que necesitas con todos los detalles.</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       FLUJO PREDEFINIDA
+  ══════════════════════════════════════════════════════ -->
+  <div id="flow-pre" style="display:none">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#f5f3ff">⚡</div>
+        <div>
+          <div class="card-title">Selecciona el tipo de solicitud</div>
+          <div class="card-desc">Al elegir, aparecen los campos específicos que necesitamos</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="predef-grid">
+          <button class="predef-card" onclick="pickPredef('foto',this)" type="button">
+            <span class="pc-icon">📸</span>
+            <span class="pc-name">Foto corporativa</span>
+            <span class="pc-desc">Sesión fotográfica de personal</span>
+          </button>
+          <button class="predef-card" onclick="pickPredef('firma',this)" type="button">
+            <span class="pc-icon">✉️</span>
+            <span class="pc-name">Firma corporativa</span>
+            <span class="pc-desc">Instalación de firma de email</span>
+          </button>
+          <button class="predef-card" onclick="pickPredef('vacante',this)" type="button">
+            <span class="pc-icon">💼</span>
+            <span class="pc-name">Vacante</span>
+            <span class="pc-desc">Publicación de oferta laboral</span>
+          </button>
+          <button class="predef-card" onclick="pickPredef('cronograma',this)" type="button">
+            <span class="pc-icon">📅</span>
+            <span class="pc-name">Cronograma de sensibilización</span>
+            <span class="pc-desc">Plan mensual de contenido por fecha</span>
+          </button>
+        </div>
+
+        <!-- ── Foto corporativa ── -->
+        <div class="dyn-fields" id="fields-foto">
+          <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px">📸 Foto corporativa</div>
+          <div class="fr">
+            <div class="fg" style="margin:0">
+              <label>Nombre de la persona <span class="req">*</span></label>
+              <input id="foto-persona" placeholder="Nombre completo de quien se fotografía">
+            </div>
+            <div class="fg" style="margin:0">
+              <label>Cargo al que ingresa <span class="req">*</span></label>
+              <input id="foto-cargo" placeholder="Ej: Coordinadora de Talento Humano">
+            </div>
+          </div>
+          <div class="fg" style="margin:0">
+            <label>Observaciones adicionales</label>
+            <textarea id="foto-notes" rows="2" placeholder="Fecha sugerida, lugar, indicaciones especiales..."></textarea>
+          </div>
+        </div>
+
+        <!-- ── Firma corporativa ── -->
+        <div class="dyn-fields" id="fields-firma">
+          <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px">✉️ Firma corporativa</div>
+          <div class="fr">
+            <div class="fg" style="margin:0">
+              <label>Nombre de la persona <span class="req">*</span></label>
+              <input id="firma-persona" placeholder="Nombre completo como aparecerá en la firma">
+            </div>
+            <div class="fg" style="margin:0">
+              <label>Nombre del cargo <span class="req">*</span></label>
+              <input id="firma-cargo" placeholder="Ej: Directora Administrativa">
+            </div>
+          </div>
+          <div class="fg" style="margin:0">
+            <label>Correo donde se instala la firma <span class="req">*</span></label>
+            <input id="firma-email" type="email" placeholder="correo@empresa.com">
+          </div>
+        </div>
+
+        <!-- ── Vacante ── -->
+        <div class="dyn-fields" id="fields-vacante">
+          <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px">💼 Vacante</div>
+          <div class="fr">
+            <div class="fg" style="margin:0">
+              <label>Nombre de la vacante <span class="req">*</span></label>
+              <input id="vacante-nombre" placeholder="Ej: Conductor de Transporte Especial">
+            </div>
+            <div class="fg" style="margin:0">
+              <label>¿Dónde debe publicarse? <span class="req">*</span></label>
+              <select id="vacante-canal">
+                <option value="">Seleccionar...</option>
+                <option>Instagram</option>
+                <option>LinkedIn</option>
+                <option>Facebook</option>
+                <option>WhatsApp</option>
+                <option>Todos los canales</option>
+                <option>Solo interno</option>
+              </select>
+            </div>
+          </div>
+          <div class="fg" style="margin:0">
+            <label>Descripción detallada de la vacante <span class="req">*</span></label>
+            <textarea id="vacante-desc" rows="5" placeholder="Incluye:&#10;• Perfil requerido (estudios, experiencia)&#10;• Funciones principales&#10;• Horario y modalidad&#10;• Salario (si aplica)&#10;• Ciudad / Lugar de trabajo&#10;• Cualquier requisito especial"></textarea>
+          </div>
+        </div>
+
+        <!-- ── Cronograma de sensibilización ── -->
+        <div class="dyn-fields" id="fields-cronograma">
+          <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px">📅 Cronograma de sensibilización</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:16px">Selecciona el mes, luego haz clic en cada día para agregar una solicitud de contenido al plan.</div>
+
+          <!-- Selector de mes -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <button type="button" onclick="cronoCal(-1)" style="width:30px;height:30px;border:1.5px solid var(--accent-border);border-radius:6px;background:var(--accent-soft);color:var(--accent);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit">‹</button>
+              <div id="crono-mes-label" style="font-size:14px;font-weight:700;min-width:140px;text-align:center;color:var(--text)"></div>
+              <button type="button" onclick="cronoCal(1)" style="width:30px;height:30px;border:1.5px solid var(--accent-border);border-radius:6px;background:var(--accent-soft);color:var(--accent);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit">›</button>
+            </div>
+            <div style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px">
+              <span style="width:10px;height:10px;border-radius:50%;background:var(--accent);display:inline-block"></span> Con solicitud
+              <span style="width:10px;height:10px;border-radius:50%;background:var(--border);display:inline-block;margin-left:6px"></span> Sin solicitud
+            </div>
+          </div>
+
+          <!-- Días de semana -->
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px">
+            <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:4px">Dom</div>
+            <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:4px">Lun</div>
+            <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:4px">Mar</div>
+            <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:4px">Mié</div>
+            <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:4px">Jue</div>
+            <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:4px">Vie</div>
+            <div style="text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:4px">Sáb</div>
+          </div>
+          <div id="crono-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:16px"></div>
+
+          <!-- Panel de entrada de solicitud por día -->
+          <div id="crono-day-panel" style="display:none;background:#fff;border:2px solid var(--accent-border);border-radius:var(--r-sm);padding:16px;margin-bottom:16px;animation:fadeIn .2s ease">
+            <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px" id="crono-day-title">📌 Solicitud para el día —</div>
+            <div class="fg" style="margin-bottom:10px">
+              <label>Nombre de la pieza <span class="req">*</span></label>
+              <input id="crono-nombre" placeholder="Ej: Día de la madre — EC Tours, Lanzamiento servicio Bogotá...">
+            </div>
+            <div class="fr" style="margin-bottom:10px">
+              <div class="fg" style="margin:0">
+                <label>Tipo de pieza <span class="req">*</span></label>
+                <select id="crono-tipo">
+                  <option value="">Seleccionar...</option>
+                  <option>Post / Imagen estática</option>
+                  <option>Historia (Story)</option>
+                  <option>Reel / Video corto</option>
+                  <option>Carrusel</option>
+                  <option>Pieza gráfica / Flyer</option>
+                </select>
+              </div>
+              <div class="fg" style="margin:0">
+                <label>Red social</label>
+                <select id="crono-red">
+                  <option value="">Seleccionar...</option>
+                  <option>Instagram</option>
+                  <option>Facebook</option>
+                  <option>TikTok</option>
+                  <option>LinkedIn</option>
+                  <option>Todos</option>
+                </select>
+              </div>
+            </div>
+            <div class="fg" style="margin-bottom:10px">
+              <label>Tema / Descripción <span class="req">*</span></label>
+              <textarea id="crono-tema" rows="2" placeholder="¿De qué trata este contenido? Objetivo, mensaje, referencias..."></textarea>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button type="button" onclick="cronoDayAdd()" style="flex:1;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-sm);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Agregar al plan</button>
+              <button type="button" onclick="cronoDayCancel()" style="padding:9px 16px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13px;cursor:pointer;font-family:inherit;color:var(--text2)">Cancelar</button>
+            </div>
+          </div>
+
+          <!-- Resumen del plan cargado -->
+          <div id="crono-resumen" style="display:none">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Plan cargado</div>
+            <div id="crono-resumen-list" style="display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+          <div id="crono-empty-msg" style="font-size:12px;color:var(--text3);padding:8px 0">Haz clic en cualquier día del calendario para agregar una solicitud.</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Datos del solicitante + empresa + prioridad -->
+    <div class="card" id="pre-datos" style="display:none">
+      <div class="step-bar"><div class="step-dot">2</div><div class="step-label">Datos del solicitante y prioridad</div></div>
+      <div class="card-body">
+        <!-- Empresa -->
+        <div style="margin-bottom:16px">
+          <label style="display:block;margin-bottom:8px">Empresa <span class="req">*</span></label>
+          <input type="hidden" id="pre-company">
+          <div class="company-grid">
+            <button class="company-btn" onclick="pickCompany('pre','ALL ROADS',this)" type="button">
+              <div class="cb-dot" style="background:#2563eb"></div><div class="cb-name">ALL ROADS</div>
+            </button>
+            <button class="company-btn" onclick="pickCompany('pre','EC TOURS',this)" type="button">
+              <div class="cb-dot" style="background:#16a34a"></div><div class="cb-name">EC TOURS</div>
+            </button>
+            <button class="company-btn" onclick="pickCompany('pre','EC TRANSPORTES',this)" type="button">
+              <div class="cb-dot" style="background:#d97706"></div><div class="cb-name">EC TRANSPORTES</div>
+            </button>
+          </div>
+          <div id="pre-company-err" class="err-msg">⚠ Selecciona la empresa</div>
+        </div>
+        <!-- Solicitante -->
+        <div class="fr">
+          <div class="fg" style="margin:0">
+            <label>Nombre del solicitante <span class="req">*</span></label>
+            <input id="pre-requestor" placeholder="Tu nombre completo">
+          </div>
+          <div class="fg" style="margin:0">
+            <label>Correo de contacto</label>
+            <input id="pre-email" type="email" placeholder="correo@empresa.com">
+          </div>
+        </div>
+        <!-- Prioridad -->
+        <div style="margin-top:4px">
+          <label style="display:block;margin-bottom:8px">Prioridad <span class="req">*</span></label>
+          <input type="hidden" id="pre-priority">
+          <div class="prio-grid">
+            <button class="prio-btn" onclick="pickPrio('pre','Alta','alta',this)" type="button">
+              <span class="pb-icon">🔴</span><span class="pb-name">Alta</span><span class="pb-days">Urgente · 1–2 días</span>
+            </button>
+            <button class="prio-btn" onclick="pickPrio('pre','Media','media',this)" type="button">
+              <span class="pb-icon">🟡</span><span class="pb-name">Media</span><span class="pb-days">Normal · 3–5 días</span>
+            </button>
+            <button class="prio-btn" onclick="pickPrio('pre','Baja','baja',this)" type="button">
+              <span class="pb-icon">🟢</span><span class="pb-name">Baja</span><span class="pb-days">Sin afán · +5 días</span>
+            </button>
+          </div>
+          <div id="pre-priority-err" class="err-msg">⚠ Selecciona la prioridad</div>
+        </div>
+      </div>
+      <div class="err-banner" id="pre-err"></div>
+      <div class="submit-wrap">
+        <button class="submit-btn" id="btn-pre" onclick="submitPre()">Enviar solicitud →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       FLUJO NUEVA
+  ══════════════════════════════════════════════════════ -->
+  <div id="flow-new" style="display:none">
+    <div class="card">
+      <div class="step-bar"><div class="step-dot">2</div><div class="step-label">Completa todos los detalles de tu solicitud</div></div>
+      <div class="card-body">
+
+        <!-- SECCIÓN: Datos de quien solicita -->
+        <div class="section-label">Datos de quien solicita</div>
+        <div class="fr">
+          <div class="fg" style="margin:0">
+            <label>Dirección de correo electrónico <span class="req">*</span></label>
+            <input id="n-email" type="email" placeholder="correo@empresa.com">
+          </div>
+          <div class="fg" style="margin:0">
+            <label>Nombre del solicitante <span class="req">*</span></label>
+            <input id="n-requestor" placeholder="Nombre completo">
+          </div>
+        </div>
+        <div class="fr" style="margin-top:14px">
+          <div class="fg" style="margin:0">
+            <label>Cargo <span class="req">*</span></label>
+            <input id="n-cargo" placeholder="Tu cargo en la empresa">
+          </div>
+          <div class="fg" style="margin:0">
+            <label>Área / Departamento <span class="req">*</span></label>
+            <input id="n-area" placeholder="Ej: Comercial, Operaciones...">
+          </div>
+        </div>
+        <!-- Empresa -->
+        <div style="margin-top:14px">
+          <label style="display:block;margin-bottom:8px">Empresa <span class="req">*</span></label>
+          <input type="hidden" id="n-company">
+          <div class="company-grid">
+            <button class="company-btn" onclick="pickCompany('n','ALL ROADS',this)" type="button">
+              <div class="cb-dot" style="background:#2563eb"></div><div class="cb-name">ALL ROADS</div>
+            </button>
+            <button class="company-btn" onclick="pickCompany('n','EC TOURS',this)" type="button">
+              <div class="cb-dot" style="background:#16a34a"></div><div class="cb-name">EC TOURS</div>
+            </button>
+            <button class="company-btn" onclick="pickCompany('n','EC TRANSPORTES',this)" type="button">
+              <div class="cb-dot" style="background:#d97706"></div><div class="cb-name">EC TRANSPORTES</div>
+            </button>
+          </div>
+          <div id="n-company-err" class="err-msg">⚠ Selecciona la empresa</div>
+        </div>
+
+        <!-- SECCIÓN: Detalles del proyecto -->
+        <div class="section-label" style="margin-top:20px">Detalles del proyecto / pieza</div>
+        <div class="fr">
+          <div class="fg" style="margin:0">
+            <label>Nombre del proyecto o campaña <span class="req">*</span></label>
+            <input id="n-project" placeholder="Ej: Campaña de verano ALL ROADS">
+          </div>
+          <div class="fg" style="margin:0">
+            <label>Tipo de solicitud <span class="req">*</span></label>
+            <select id="n-type">
+              <option value="">Seleccionar...</option>
+              <option>Diseño gráfico</option>
+              <option>Contenido para redes sociales</option>
+              <option>Video / Reel</option>
+              <option>Fotografía</option>
+              <option>Campaña publicitaria</option>
+              <option>Presentación / Documento</option>
+              <option>Branding / Identidad visual</option>
+              <option>Material impreso</option>
+              <option>Otro</option>
+            </select>
+          </div>
+        </div>
+        <div class="fr" style="margin-top:14px">
+          <div class="fg" style="margin:0">
+            <label>Objetivo de la pieza <span class="req">*</span></label>
+            <select id="n-objetivo">
+              <option value="">Seleccionar...</option>
+              <option>Promocional / Venta</option>
+              <option>Informativo / Educativo</option>
+              <option>Entretenimiento</option>
+              <option>Conexión / Comunidad</option>
+              <option>Reconocimiento de marca</option>
+              <option>Comunicación interna</option>
+              <option>Reclutamiento</option>
+            </select>
+          </div>
+          <div class="fg" style="margin:0">
+            <label>Público objetivo <span class="req">*</span></label>
+            <input id="n-publico" placeholder="Ej: Clientes empresariales, jóvenes 18-30...">
+          </div>
+        </div>
+        <div class="fr" style="margin-top:14px">
+          <div class="fg" style="margin:0">
+            <label>Tipo de pieza solicitada <span class="req">*</span></label>
+            <select id="n-pieza">
+              <option value="">Seleccionar...</option>
+              <option>Post / Imagen estática</option>
+              <option>Historia (Story)</option>
+              <option>Reel / Video corto</option>
+              <option>Carrusel</option>
+              <option>Pieza gráfica / Flyer</option>
+              <option>Banner digital</option>
+              <option>Video largo</option>
+              <option>PDF / Presentación</option>
+              <option>Material impreso</option>
+            </select>
+          </div>
+          <div class="fg" style="margin:0">
+            <label>Canales donde se usará <span class="req">*</span></label>
+            <input id="n-canales" placeholder="Ej: Instagram, LinkedIn, impreso...">
+          </div>
+        </div>
+
+        <!-- SECCIÓN: Contenido -->
+        <div class="section-label" style="margin-top:20px">Contenido y referencias</div>
+        <div class="fg">
+          <label>¿Qué debe comunicar la pieza? <span class="req">*</span></label>
+          <textarea id="n-mensaje" rows="3" placeholder="Describe el mensaje principal, el tono y lo que quieres que sienta el público al verla..."></textarea>
+        </div>
+        <div class="fg">
+          <label>¿Existe alguna referencia o inspiración?</label>
+          <textarea id="n-referencia" rows="2" placeholder="Links, imágenes, piezas que te gusten como referencia visual o de estilo..."></textarea>
+        </div>
+        <div class="fg">
+          <label>Material disponible</label>
+          <textarea id="n-material" rows="2" placeholder="¿Tienes fotos, videos, textos o logos propios? Describe qué tienes y comparte el link si aplica..."></textarea>
+        </div>
+
+        <!-- SECCIÓN: Prioridad -->
+        <div class="section-label" style="margin-top:20px">Prioridad y cierre</div>
+        <div style="margin-bottom:14px">
+          <label style="display:block;margin-bottom:8px">Especifica el tipo de prioridad <span class="req">*</span></label>
+          <input type="hidden" id="n-priority">
+          <div class="prio-grid">
+            <button class="prio-btn" onclick="pickPrio('n','Alta','alta',this)" type="button">
+              <span class="pb-icon">🔴</span><span class="pb-name">Alta</span><span class="pb-days">Urgente · 1–2 días</span>
+            </button>
+            <button class="prio-btn" onclick="pickPrio('n','Media','media',this)" type="button">
+              <span class="pb-icon">🟡</span><span class="pb-name">Media</span><span class="pb-days">Normal · 3–5 días</span>
+            </button>
+            <button class="prio-btn" onclick="pickPrio('n','Baja','baja',this)" type="button">
+              <span class="pb-icon">🟢</span><span class="pb-name">Baja</span><span class="pb-days">Sin afán · +5 días</span>
+            </button>
+          </div>
+          <div id="n-priority-err" class="err-msg">⚠ Selecciona la prioridad</div>
+        </div>
+        <div class="fg" style="margin:0">
+          <label>Observaciones adicionales</label>
+          <textarea id="n-observaciones" rows="3" placeholder="Cualquier información extra que el equipo creativo deba saber: restricciones, colores, textos obligatorios, fechas clave, etc."></textarea>
+        </div>
+
+      </div>
+      <div class="err-banner" id="new-err"></div>
+      <div class="submit-wrap">
+        <button class="submit-btn" id="btn-new" onclick="submitNew()">Enviar solicitud →</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /form-screen -->
+
+<!-- SUCCESS -->
+<div class="card" id="success-screen" style="display:none">
+  <div class="success-wrap" style="display:block">
+    <div class="s-circle">✅</div>
+    <div class="s-h">¡Solicitud enviada!</div>
+    <div class="s-p">Tu solicitud fue recibida correctamente. El equipo creativo la revisará y te contactará pronto.</div>
+    <div class="s-id" id="s-id">SOL-001</div>
+    <div class="s-summary" id="s-summary"></div>
+    <button class="reset-btn" onclick="resetAll()">Enviar otra solicitud</button>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<footer>EC Group · Área Creativa &nbsp;·&nbsp; <a href="index.html">Iniciar sesión →</a></footer>
+
+<script>
+// ── Estado ──────────────────────────────────────────────────────────────────
+let _flowType = '';    // 'pre' | 'new'
+let _predefType = '';  // 'foto' | 'firma' | 'vacante'
+
+// ── Paso 1: flujo ───────────────────────────────────────────────────────────
+function pickType(t, btn){
+  _flowType = t;
+  document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('flow-pre').style.display = t==='pre'?'block':'none';
+  document.getElementById('flow-new').style.display = t==='new'?'block':'none';
+  setTimeout(()=>document.getElementById(t==='pre'?'flow-pre':'flow-new')
+    .scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+}
+
+// ── Tipo predefinido ────────────────────────────────────────────────────────
+function pickPredef(t, btn){
+  _predefType = t;
+  document.querySelectorAll('.predef-card').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  // Ocultar todos los panels dinámicos
+  ['foto','firma','vacante','cronograma'].forEach(k=>{
+    document.getElementById('fields-'+k).style.display='none';
+  });
+  // Mostrar el seleccionado
+  const panel = document.getElementById('fields-'+t);
+  panel.style.display = 'block';
+  // Mostrar card de datos básicos
+  const datos = document.getElementById('pre-datos');
+  datos.style.display = 'block';
+  // Si es cronograma, inicializar el calendario
+  if(t==='cronograma') renderCronoCal();
+  setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'nearest'}),150);
+}
+
+// ── Empresa ─────────────────────────────────────────────────────────────────
+function pickCompany(flow, val, btn){
+  btn.closest('.company-grid').querySelectorAll('.company-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById(flow+'-company').value = val;
+  const errEl = document.getElementById(flow+'-company-err');
+  if(errEl) errEl.style.display='none';
+}
+
+// ── Prioridad ───────────────────────────────────────────────────────────────
+function pickPrio(flow, val, cls, btn){
+  btn.closest('.prio-grid').querySelectorAll('.prio-btn').forEach(b=>{
+    b.classList.remove('sel-alta','sel-media','sel-baja');
+  });
+  btn.classList.add('sel-'+cls);
+  document.getElementById(flow+'-priority').value = val;
+  const errEl = document.getElementById(flow+'-priority-err');
+  if(errEl) errEl.style.display='none';
+}
+
+// ── Utils ───────────────────────────────────────────────────────────────────
+function v(id){return document.getElementById(id)?.value?.trim()||'';}
+function setErr(id,show){const el=document.getElementById(id);if(el)el.classList.toggle('err',show);}
+function genId(){
+  let list=[];
+  try{const s=localStorage.getItem('ecpm_solicitudes');if(s)list=JSON.parse(s);}catch(e){}
+  return 'SOL-'+(list.length+1).toString().padStart(3,'0');
+}
+function todayStr(){return new Date().toISOString().split('T')[0];}
+function saveSol(sol){
+  let list=[];
+  try{const s=localStorage.getItem('ecpm_solicitudes');if(s)list=JSON.parse(s);}catch(e){}
+  list.unshift(sol);
+  try{localStorage.setItem('ecpm_solicitudes',JSON.stringify(list));}catch(e){}
+}
+
+// ── Submit predefinida ──────────────────────────────────────────────────────
+function submitPre(){
+  let ok=true; const errs=[];
+
+  if(!_predefType){ errs.push('Selecciona el tipo de solicitud'); ok=false; }
+
+  // Validar campos del tipo seleccionado
+  if(_predefType==='foto'){
+    if(!v('foto-persona')){setErr('foto-persona',true);errs.push('Nombre de la persona');ok=false;}else setErr('foto-persona',false);
+    if(!v('foto-cargo')){setErr('foto-cargo',true);errs.push('Cargo al que ingresa');ok=false;}else setErr('foto-cargo',false);
+  }
+  if(_predefType==='firma'){
+    if(!v('firma-persona')){setErr('firma-persona',true);errs.push('Nombre de la persona');ok=false;}else setErr('firma-persona',false);
+    if(!v('firma-cargo')){setErr('firma-cargo',true);errs.push('Nombre del cargo');ok=false;}else setErr('firma-cargo',false);
+    if(!v('firma-email')){setErr('firma-email',true);errs.push('Correo de instalación');ok=false;}else setErr('firma-email',false);
+  }
+  if(_predefType==='vacante'){
+    if(!v('vacante-nombre')){setErr('vacante-nombre',true);errs.push('Nombre de la vacante');ok=false;}else setErr('vacante-nombre',false);
+    if(!v('vacante-canal')){setErr('vacante-canal',true);errs.push('Canal de publicación');ok=false;}else setErr('vacante-canal',false);
+    if(!v('vacante-desc')){setErr('vacante-desc',true);errs.push('Descripción de la vacante');ok=false;}else setErr('vacante-desc',false);
+  }
+
+  if(_predefType==='cronograma'){
+    if(_cronoPlan.length===0){ errs.push('Agrega al menos una solicitud al cronograma'); ok=false; }
+  }
+
+  if(!v('pre-company')){document.getElementById('pre-company-err').style.display='block';errs.push('Empresa');ok=false;}
+  if(!v('pre-requestor')){setErr('pre-requestor',true);errs.push('Nombre del solicitante');ok=false;}else setErr('pre-requestor',false);
+  if(!v('pre-priority')){document.getElementById('pre-priority-err').style.display='block';errs.push('Prioridad');ok=false;}
+
+  const errBanner=document.getElementById('pre-err');
+  if(!ok){errBanner.style.display='block';errBanner.textContent='⚠ Completa los campos requeridos: '+errs.join(', ');return;}
+  errBanner.style.display='none';
+
+  // Construir descripción según tipo
+  let desc='', title='';
+  if(_predefType==='foto'){
+    title='Foto corporativa — '+v('foto-persona');
+    desc=`Nombre: ${v('foto-persona')}\nCargo al que ingresa: ${v('foto-cargo')}${v('foto-notes')?'\n\nObservaciones: '+v('foto-notes'):''}`;
+  } else if(_predefType==='firma'){
+    title='Firma corporativa — '+v('firma-persona');
+    desc=`Nombre: ${v('firma-persona')}\nCargo: ${v('firma-cargo')}\nCorreo de instalación: ${v('firma-email')}`;
+  } else if(_predefType==='vacante'){
+    title='Vacante — '+v('vacante-nombre');
+    desc=`Vacante: ${v('vacante-nombre')}\nCanal de publicación: ${v('vacante-canal')}\n\nDescripción:\n${v('vacante-desc')}`;
+  } else if(_predefType==='cronograma'){
+    const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const mesLabel=MESES[_cronoYear ? new Date(_cronoYear,_cronoMonth).getMonth() : new Date().getMonth()]+' '+(_cronoYear||new Date().getFullYear());
+    title='Cronograma de sensibilización — '+mesLabel;
+    desc='Cronograma de sensibilización EC Group\nMes: '+mesLabel+'\n\n'
+      +_cronoPlan.sort((a,b)=>a.day-b.day).map(e=>`• Día ${e.day}: [${e.tipo}] ${e.nombre}${e.red?' ('+e.red+')':''} — ${e.tema}`).join('\n');
+  }
+
+  const typeLabel={foto:'Foto corporativa',firma:'Firma corporativa',vacante:'Vacante',cronograma:'Cronograma de sensibilización'}[_predefType]||_predefType;
+  const sol={
+    id:genId(), title, type:typeLabel,
+    company:v('pre-company'), requestor:v('pre-requestor'), email:v('pre-email'),
+    priority:v('pre-priority'), description:desc,
+    cronoPlan:_predefType==='cronograma'?[..._cronoPlan]:[],
+    date:todayStr(), status:'Pendiente', source:'externo', isPredefined:true
+  };
+
+  const btn=document.getElementById('btn-pre');
+  btn.disabled=true; btn.textContent='Enviando...';
+  setTimeout(()=>{saveSol(sol);showSuccess(sol);},500);
+}
+
+// ── CRONOGRAMA CALENDAR ─────────────────────────────────────────────────────
+let _cronoMonth = new Date().getMonth();
+let _cronoYear  = new Date().getFullYear();
+let _cronoPlan  = [];   // [{day, tipo, red, tema}]
+let _cronoActiveDay = null;
+
+const MESES_CAL = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function cronoCal(dir){
+  _cronoMonth += dir;
+  if(_cronoMonth > 11){ _cronoMonth=0; _cronoYear++; }
+  if(_cronoMonth < 0){ _cronoMonth=11; _cronoYear--; }
+  renderCronoCal();
+}
+
+function renderCronoCal(){
+  const label = document.getElementById('crono-mes-label');
+  if(label) label.textContent = MESES_CAL[_cronoMonth] + ' ' + _cronoYear;
+
+  const grid = document.getElementById('crono-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
+
+  const firstDay = new Date(_cronoYear, _cronoMonth, 1).getDay();
+  const daysInMonth = new Date(_cronoYear, _cronoMonth+1, 0).getDate();
+  const todayD = new Date(); 
+
+  // Empty cells before first day
+  for(let i=0; i<firstDay; i++){
+    const empty = document.createElement('div');
+    empty.style.cssText = 'min-height:52px';
+    grid.appendChild(empty);
+  }
+
+  for(let d=1; d<=daysInMonth; d++){
+    const dayEntries = _cronoPlan.filter(e=>e.day===d);
+    const hasEntries = dayEntries.length > 0;
+    const isToday = d===todayD.getDate() && _cronoMonth===todayD.getMonth() && _cronoYear===todayD.getFullYear();
+    const isActive = _cronoActiveDay === d;
+
+    const cell = document.createElement('div');
+    cell.style.cssText = `
+      min-height:52px; border-radius:8px; padding:4px;
+      border:2px solid ${isActive?'var(--accent)': hasEntries?'var(--accent-border)':'var(--border)'};
+      background:${isActive?'var(--accent-soft)': hasEntries?'#f0f9ff': isToday?'#fef9c3':'var(--surface)'};
+      cursor:pointer; transition:all .12s; position:relative;
+    `;
+
+    // Day number
+    const num = document.createElement('div');
+    num.style.cssText = `font-size:11px; font-weight:700; color:${isToday?'var(--amber)':isActive?'var(--accent)':'var(--text2)'}; margin-bottom:2px`;
+    num.textContent = d;
+    cell.appendChild(num);
+
+    // Entry chips
+    dayEntries.slice(0,2).forEach(e=>{
+      const chip = document.createElement('div');
+      chip.style.cssText = 'font-size:9px;font-weight:600;background:var(--accent);color:#fff;border-radius:3px;padding:1px 4px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+      chip.textContent = e.nombre || (e.tipo ? e.tipo.split('/')[0].trim() : e.tema.substring(0,12));
+      chip.title = e.nombre + (e.tema ? ' — ' + e.tema : '');
+      cell.appendChild(chip);
+    });
+    if(dayEntries.length > 2){
+      const more = document.createElement('div');
+      more.style.cssText='font-size:9px;color:var(--accent);font-weight:600';
+      more.textContent='+'+( dayEntries.length-2);
+      cell.appendChild(more);
+    }
+
+    cell.onclick = () => openCronoDay(d);
+    cell.onmouseenter = ()=>{ if(!isActive) cell.style.borderColor='var(--accent)'; };
+    cell.onmouseleave = ()=>{ if(!isActive) cell.style.borderColor=hasEntries?'var(--accent-border)':'var(--border)'; };
+    grid.appendChild(cell);
+  }
+}
+
+function openCronoDay(day){
+  _cronoActiveDay = day;
+  renderCronoCal();
+  const panel = document.getElementById('crono-day-panel');
+  const title = document.getElementById('crono-day-title');
+  title.textContent = `📌 Solicitud para el ${day} de ${MESES_CAL[_cronoMonth]}`;
+  // Clear inputs
+  document.getElementById('crono-nombre').value='';
+  document.getElementById('crono-tipo').value='';
+  document.getElementById('crono-red').value='';
+  document.getElementById('crono-tema').value='';
+  panel.style.display='block';
+  setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+}
+
+function cronoDayAdd(){
+  const nombre = document.getElementById('crono-nombre').value.trim();
+  const tipo   = document.getElementById('crono-tipo').value;
+  const red    = document.getElementById('crono-red').value;
+  const tema   = document.getElementById('crono-tema').value.trim();
+  let ok = true;
+  if(!nombre){ document.getElementById('crono-nombre').classList.add('err'); ok=false; }
+  else document.getElementById('crono-nombre').classList.remove('err');
+  if(!tipo){ document.getElementById('crono-tipo').classList.add('err'); ok=false; }
+  else document.getElementById('crono-tipo').classList.remove('err');
+  if(!tema){ document.getElementById('crono-tema').classList.add('err'); ok=false; }
+  else document.getElementById('crono-tema').classList.remove('err');
+  if(!ok) return;
+
+  _cronoPlan.push({ day:_cronoActiveDay, nombre, tipo, red, tema });
+  _cronoActiveDay = null;
+  document.getElementById('crono-day-panel').style.display='none';
+  renderCronoCal();
+  renderCronoResumen();
+}
+
+function cronoDayCancel(){
+  _cronoActiveDay = null;
+  document.getElementById('crono-day-panel').style.display='none';
+  renderCronoCal();
+}
+
+function cronoDayRemove(idx){
+  _cronoPlan.splice(idx,1);
+  renderCronoCal();
+  renderCronoResumen();
+}
+
+function renderCronoResumen(){
+  const resumen = document.getElementById('crono-resumen');
+  const list    = document.getElementById('crono-resumen-list');
+  const empty   = document.getElementById('crono-empty-msg');
+  if(!_cronoPlan.length){
+    resumen.style.display='none';
+    empty.style.display='block';
+    return;
+  }
+  empty.style.display='none';
+  resumen.style.display='block';
+  list.innerHTML = [..._cronoPlan]
+    .sort((a,b)=>a.day-b.day)
+    .map((e,i)=>{
+      const realIdx = _cronoPlan.indexOf(e);
+      return `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:#fff;border:1px solid var(--border);border-radius:6px">
+        <div style="width:32px;height:32px;border-radius:6px;background:var(--accent-soft);border:1px solid var(--accent-border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--accent);flex-shrink:0">${e.day}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:700;color:var(--text)">${e.nombre}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:1px">${e.tipo}${e.red?' · <span style="color:var(--accent)">'+e.red+'</span>':''}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.tema}</div>
+        </div>
+        <button type="button" onclick="cronoDayRemove(${realIdx})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:0 2px;line-height:1;flex-shrink:0" title="Eliminar">×</button>
+      </div>`;
+    }).join('');
+}
+
+window.cronoCal=cronoCal;
+window.openCronoDay=openCronoDay;
+window.cronoDayAdd=cronoDayAdd;
+window.cronoDayCancel=cronoDayCancel;
+window.cronoDayRemove=cronoDayRemove;
+function submitNew(){
+  let ok=true; const errs=[];
+  const required=[
+    {id:'n-email',label:'Correo electrónico'},
+    {id:'n-requestor',label:'Nombre del solicitante'},
+    {id:'n-cargo',label:'Cargo'},
+    {id:'n-area',label:'Área / Departamento'},
+    {id:'n-project',label:'Nombre del proyecto'},
+    {id:'n-type',label:'Tipo de solicitud'},
+    {id:'n-objetivo',label:'Objetivo de la pieza'},
+    {id:'n-publico',label:'Público objetivo'},
+    {id:'n-pieza',label:'Tipo de pieza'},
+    {id:'n-canales',label:'Canales'},
+    {id:'n-mensaje',label:'¿Qué debe comunicar?'},
+  ];
+  required.forEach(f=>{
+    if(!v(f.id)){setErr(f.id,true);errs.push(f.label);ok=false;}else setErr(f.id,false);
+  });
+  if(!v('n-company')){document.getElementById('n-company-err').style.display='block';errs.push('Empresa');ok=false;}
+  if(!v('n-priority')){document.getElementById('n-priority-err').style.display='block';errs.push('Prioridad');ok=false;}
+
+  const errBanner=document.getElementById('new-err');
+  if(!ok){errBanner.style.display='block';errBanner.textContent='⚠ Completa los campos requeridos: '+errs.join(', ');return;}
+  errBanner.style.display='none';
+
+  const sol={
+    id:genId(),
+    title:v('n-project'),
+    type:v('n-type'),
+    company:v('n-company'),
+    requestor:v('n-requestor'),
+    email:v('n-email'),
+    cargo:v('n-cargo'),
+    area:v('n-area'),
+    objetivo:v('n-objetivo'),
+    publicoObjetivo:v('n-publico'),
+    tipoPieza:v('n-pieza'),
+    canales:v('n-canales'),
+    mensaje:v('n-mensaje'),
+    referencia:v('n-referencia'),
+    material:v('n-material'),
+    priority:v('n-priority'),
+    observaciones:v('n-observaciones'),
+    description:v('n-mensaje'),
+    date:todayStr(),
+    status:'Pendiente',
+    source:'externo',
+    isPredefined:false
+  };
+
+  const btn=document.getElementById('btn-new');
+  btn.disabled=true; btn.textContent='Enviando...';
+  setTimeout(()=>{saveSol(sol);showSuccess(sol);},500);
+}
+
+// ── Mostrar éxito ───────────────────────────────────────────────────────────
+function showSuccess(sol){
+  document.getElementById('form-screen').style.display='none';
+  document.getElementById('success-screen').style.display='block';
+  document.getElementById('s-id').textContent=sol.id;
+  const prioColor={Alta:'var(--red)',Media:'var(--amber)',Baja:'var(--green)'}[sol.priority]||'var(--text2)';
+  document.getElementById('s-summary').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px">
+      <div><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:2px">Solicitud</div><div style="font-weight:600">${sol.title}</div></div>
+      <div><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:2px">Empresa</div><div style="font-weight:600">${sol.company}</div></div>
+      <div><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:2px">Solicitante</div>${sol.requestor}</div>
+      <div><div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:2px">Prioridad</div><span style="color:${prioColor};font-weight:700">${sol.priority}</span></div>
+    </div>`;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── Reset ───────────────────────────────────────────────────────────────────
+function resetAll(){
+  _flowType=''; _predefType='';
+  _cronoPlan=[]; _cronoActiveDay=null;
+  _cronoMonth=new Date().getMonth(); _cronoYear=new Date().getFullYear();
+  document.querySelectorAll('.type-btn,.predef-card,.company-btn,.prio-btn').forEach(b=>b.classList.remove('selected','sel-alta','sel-media','sel-baja'));
+  document.querySelectorAll('input:not([type=hidden]),textarea').forEach(el=>{el.value='';el.classList.remove('err');});
+  document.querySelectorAll('select').forEach(el=>{el.value='';el.classList.remove('err');});
+  document.querySelectorAll('input[type=hidden]').forEach(el=>el.value='');
+  ['flow-pre','flow-new','pre-datos','fields-foto','fields-firma','fields-vacante','fields-cronograma','crono-day-panel'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='none';
+  });
+  ['pre-err','new-err','pre-company-err','n-company-err','pre-priority-err','n-priority-err'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='none';
+  });
+  document.getElementById('success-screen').style.display='none';
+  document.getElementById('form-screen').style.display='block';
+  ['btn-pre','btn-new'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(b){b.disabled=false;b.textContent='Enviar solicitud →';}
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
